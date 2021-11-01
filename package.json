@@ -1,0 +1,9 @@
+{
+  "name": "typegen",
+  "private": true,
+  "dependencies": {
+    "@polkadot/api": "^6.5.2",
+    "@polkadot/types": "^6.5.2",
+    "@polkadot/util": "^7.6.1"
+  }
+}
