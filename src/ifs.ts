@@ -3,13 +3,8 @@ import type {MetadataLatest, SiField, SiLookupTypeId, SiType} from "@polkadot/ty
 import {stringCamelCase} from "@polkadot/util"
 import assert from "assert"
 import {Imports, isReservedTypeName} from "./imports"
-import {Output} from "./out"
-
-
-/**
- * Index of a type in metadata lookup table
- */
-export type Ti = number
+import {getHash, getTypesCount, Ti} from "./metadata"
+import {Output} from "./util/out"
 
 
 export class Interfaces {
@@ -22,7 +17,7 @@ export class Interfaces {
         private metadata: MetadataLatest,
         private out: Output
     ) {
-        this.names = allocateNames(this.metadata)
+        this.names = assignNames(this.metadata)
         this.generated = new Array(getTypesCount(this.metadata))
         this.out.lazy(() => this.imports.render())
     }
@@ -75,6 +70,8 @@ export class Interfaces {
             if (fields.length == 0) {
                 this.imports.use('Null')
                 name = 'Null'
+            } if (fields.length == 1 && fields[0].name.isNone && isMangledName(this.getName(ti))) {
+                name = this.use(fields[0].type.toNumber())
             } else {
                 name = this.getName(ti)
                 this.queue.push(() => {
@@ -88,12 +85,12 @@ export class Interfaces {
                 })
             }
         } else if (def.isVariant) {
-            if (type.path.toString() === 'Option') {
+            if (isOptionType(type)) {
                 this.imports.use('Option')
                 assert(type.params.length === 1)
                 let param = this.use(type.params[0].type.unwrap().toNumber())
                 name = `Option<${param}>`
-            } else if (type.path.toString() === 'Result') {
+            } else if (isResultType(type)) {
                 this.imports.use('Result')
                 assert(type.params.length === 2)
                 let rt = this.use(type.params[0].type.unwrap().toNumber())
@@ -177,44 +174,87 @@ export class Interfaces {
 }
 
 
-function getTypesCount(metadata: MetadataLatest): number {
-    return metadata.lookup.types.length
+function isOptionType(type: SiType): boolean {
+    let path = type.path
+    return path.length === 1 && path[0].toString() === 'Option'
+}
+
+
+function isResultType(type: SiType): boolean {
+    let path = type.path
+    return path.length === 1 && path[0].toString() === 'Result'
+}
+
+
+function isMangledName(name: string): boolean {
+    return /_\d/.test(name)
 }
 
 
 /**
- * Ad-hoc way to name to types
- *
- * First the last component of item path is tried (the simple name). If there is a clash,
- * then the simple name will be assigned to the type with the most usages.
- * Other names will be mangled with `_${idx}` suffix
+ * Assign names to types which need to be named
  */
-function allocateNames(metadata: MetadataLatest): Map<Ti, string> {
-    let usage = nameUsage(metadata)
-    let refs = computeRefCounts(metadata)
+function assignNames(metadata: MetadataLatest): Map<Ti, string> {
+    let assignment = new Map<number, string>()
+    let usedNames = new Set<string>()
 
-    usage.forEach(list => list.sort((a, b) => refs[b] - refs[a]))
-
-    let names = new Map<number, string>()
-
-    for (let i = 0; i < getTypesCount(metadata); i++) {
-        let type = metadata.lookup.getSiType(i)
-        if (isNamedType(type)) {
-            if (type.path.length === 0) {
-                names.set(i, `Lookup_${i}`)
-            } else {
-                let name = getSimpleName(type)
-                let owner = usage.get(name)?.[0]
-                if (isReservedTypeName(name) || owner !== i) {
-                    names.set(i, `${name}_${i}`)
-                } else  {
-                    names.set(i, name)
-                }
-            }
-        }
+    function assign(type: Ti, name: string): void {
+        assignment.set(type, name)
+        usedNames.add(name)
     }
 
-    return names
+    let names = nameUsage(metadata)
+
+    let refs = computeRefCounts(metadata)
+    names.forEach(list => list.sort((a, b) => refs[b] - refs[a]))
+
+    names.forEach((types, name) => {
+        if (isReservedTypeName(name)) {
+            types.forEach(ti => {
+                assign(ti, `${name}_${ti}`)
+            })
+            return
+        }
+
+        let unique = new Map<string, Ti>()
+        types.forEach(ti => {
+            let hash = getHash(metadata, ti)
+            if (unique.has(hash)) return
+            unique.set(hash, ti)
+        })
+
+        if (unique.size == 1) {
+            types.forEach(ti => assign(ti, name))
+            return
+        }
+
+        unique.forEach(ti => {
+            let path = metadata.lookup.getSiType(ti).path
+            let version = path.map(text => text.toString()).find(name => /^v\d+$/i.test(name))
+            if (version) {
+                let versionedName = name + 'V' + version.slice(1)
+                if (!usedNames.has(versionedName)) {
+                    assign(ti, versionedName)
+                    return
+                }
+            }
+            if (usedNames.has(name)) {
+                assign(ti, name + '_' + ti)
+            } else {
+                assign(ti, name)
+            }
+        })
+
+        types.forEach(ti => {
+            let alias = unique.get(getHash(metadata, ti))
+            assert(alias != null)
+            let name = assignment.get(alias)
+            assert(name != null)
+            assignment.set(ti, name)
+        })
+    })
+
+    return assignment
 }
 
 
@@ -223,19 +263,26 @@ function allocateNames(metadata: MetadataLatest): Map<Ti, string> {
  */
 function nameUsage(metadata: MetadataLatest): Map<string, Ti[]> {
     let names = new Map<string, Ti[]>()
+    forEachNamedType(metadata, (type, ti) => {
+        let name = getSimpleName(type)
+        let list = names.get(name)
+        if (list == null) {
+            list = []
+            names.set(name, list)
+        }
+        list.push(ti)
+    })
+    return names
+}
+
+
+function forEachNamedType(metadata: MetadataLatest, cb: (type: SiType, ti: Ti) => void): void {
     for (let i = 0; i < getTypesCount(metadata); i++) {
         let type = metadata.lookup.getSiType(i)
         if (isNamedType(type)) {
-            let name = getSimpleName(type)
-            let list = names.get(name)
-            if (list == null) {
-                list = []
-                names.set(name, list)
-            }
-            list.push(i)
+            cb(type, i)
         }
     }
-    return names
 }
 
 

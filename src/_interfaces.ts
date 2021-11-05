@@ -1,4 +1,4 @@
-import type {Bool, Bytes, Compact, Enum, Null, Struct, U128, U16, U32, U64, U8, U8aFixed, Vec} from '@polkadot/types'
+import type {Bool, Bytes, Compact, Enum, Null, Option, Result, Struct, U128, U16, U32, U64, U8, U8aFixed, Vec} from '@polkadot/types'
 import type {ITuple} from '@polkadot/types/types'
 
 export interface DispatchInfo extends Struct {
@@ -30,9 +30,9 @@ export interface BalanceStatus extends Enum {
   readonly isReserved: boolean
 }
 
-export interface Public_38 extends Public_39 {}
+export interface Public extends U8aFixed {}
 
-export interface Public_41 extends Public {}
+export interface Public extends U8aFixed {}
 
 export interface Exposure extends Struct {
   readonly total: Compact<U128>
@@ -46,20 +46,7 @@ export interface VoteThreshold extends Enum {
   readonly isSimpleMajority: boolean
 }
 
-export interface Result_52 extends Enum {
-  readonly isOk: boolean
-  readonly asOk: Null
-  readonly isErr: boolean
-  readonly asErr: DispatchError
-}
-
 export interface EthereumAddress extends U8aFixed {}
-
-export interface Option_72 extends Enum {
-  readonly isNone: boolean
-  readonly isSome: boolean
-  readonly asSome: Bytes
-}
 
 export interface ProxyType extends Enum {
   readonly isAny: boolean
@@ -84,12 +71,6 @@ export interface ElectionCompute extends Enum {
   readonly isEmergency: boolean
 }
 
-export interface Option_82 extends Enum {
-  readonly isNone: boolean
-  readonly isSome: boolean
-  readonly asSome: ElectionCompute
-}
-
 export interface CandidateReceipt extends Struct {
   readonly descriptor: CandidateDescriptor
   readonly commitmentsHash: H256
@@ -107,9 +88,9 @@ export interface Outcome extends Enum {
   readonly isComplete: boolean
   readonly asComplete: U64
   readonly isIncomplete: boolean
-  readonly asIncomplete: ITuple<[U64, Error]>
+  readonly asIncomplete: ITuple<[U64, ErrorV2]>
   readonly isError: boolean
-  readonly asError: Error
+  readonly asError: ErrorV2
 }
 
 export interface HrmpChannelId extends Struct {
@@ -117,37 +98,31 @@ export interface HrmpChannelId extends Struct {
   readonly recipient: Id
 }
 
-export interface MultiLocation extends Struct {
+export interface MultiLocationV1 extends Struct {
   readonly parents: U8
   readonly interior: Junctions
 }
 
-export interface Xcm_116 extends Vec<Instruction> {}
+export interface XcmV2 extends Vec<InstructionV2> {}
 
-export interface Response extends Enum {
+export interface ResponseV2 extends Enum {
   readonly isNull: boolean
   readonly isAssets: boolean
   readonly asAssets: MultiAssets
   readonly isExecutionResult: boolean
-  readonly asExecutionResult: Option_127
+  readonly asExecutionResult: Option<ITuple<[U32, ErrorV2]>>
   readonly isVersion: boolean
   readonly asVersion: U32
 }
 
-export interface Option_135 extends Enum {
-  readonly isNone: boolean
-  readonly isSome: boolean
-  readonly asSome: MultiLocation
-}
-
 export interface VersionedMultiAssets extends Enum {
   readonly isV0: boolean
-  readonly asV0: Vec<MultiAsset_138>
+  readonly asV0: Vec<MultiAssetV0>
   readonly isV1: boolean
   readonly asV1: MultiAssets
 }
 
-export interface Error extends Enum {
+export interface ErrorV2 extends Enum {
   readonly isOverflow: boolean
   readonly isUnimplemented: boolean
   readonly isUntrustedReserveLocation: boolean
@@ -180,9 +155,9 @@ export interface Error extends Enum {
 
 export interface VersionedMultiLocation extends Enum {
   readonly isV0: boolean
-  readonly asV0: MultiLocation_139
+  readonly asV0: MultiLocationV0
   readonly isV1: boolean
-  readonly asV1: MultiLocation
+  readonly asV1: MultiLocationV1
 }
 
 export interface DispatchClass extends Enum {
@@ -217,10 +192,6 @@ export interface ArithmeticError extends Enum {
   readonly isDivisionByZero: boolean
 }
 
-export interface Public_39 extends U8aFixed {}
-
-export interface Public extends U8aFixed {}
-
 export interface IndividualExposure extends Struct {
   readonly who: AccountId32
   readonly value: Compact<U128>
@@ -229,11 +200,11 @@ export interface IndividualExposure extends Struct {
 export interface CandidateDescriptor extends Struct {
   readonly paraId: Id
   readonly relayParent: H256
-  readonly collator: Public_89
+  readonly collator: Public
   readonly persistedValidationDataHash: H256
   readonly povHash: H256
   readonly erasureRoot: H256
-  readonly signature: Signature_90
+  readonly signature: Signature
   readonly paraHead: H256
   readonly validationCodeHash: ValidationCodeHash
 }
@@ -241,24 +212,24 @@ export interface CandidateDescriptor extends Struct {
 export interface Junctions extends Enum {
   readonly isHere: boolean
   readonly isX1: boolean
-  readonly asX1: Junction
+  readonly asX1: JunctionV1
   readonly isX2: boolean
-  readonly asX2: ITuple<[Junction, Junction]>
+  readonly asX2: ITuple<[JunctionV1, JunctionV1]>
   readonly isX3: boolean
-  readonly asX3: ITuple<[Junction, Junction, Junction]>
+  readonly asX3: ITuple<[JunctionV1, JunctionV1, JunctionV1]>
   readonly isX4: boolean
-  readonly asX4: ITuple<[Junction, Junction, Junction, Junction]>
+  readonly asX4: ITuple<[JunctionV1, JunctionV1, JunctionV1, JunctionV1]>
   readonly isX5: boolean
-  readonly asX5: ITuple<[Junction, Junction, Junction, Junction, Junction]>
+  readonly asX5: ITuple<[JunctionV1, JunctionV1, JunctionV1, JunctionV1, JunctionV1]>
   readonly isX6: boolean
-  readonly asX6: ITuple<[Junction, Junction, Junction, Junction, Junction, Junction]>
+  readonly asX6: ITuple<[JunctionV1, JunctionV1, JunctionV1, JunctionV1, JunctionV1, JunctionV1]>
   readonly isX7: boolean
-  readonly asX7: ITuple<[Junction, Junction, Junction, Junction, Junction, Junction, Junction]>
+  readonly asX7: ITuple<[JunctionV1, JunctionV1, JunctionV1, JunctionV1, JunctionV1, JunctionV1, JunctionV1]>
   readonly isX8: boolean
-  readonly asX8: ITuple<[Junction, Junction, Junction, Junction, Junction, Junction, Junction, Junction]>
+  readonly asX8: ITuple<[JunctionV1, JunctionV1, JunctionV1, JunctionV1, JunctionV1, JunctionV1, JunctionV1, JunctionV1]>
 }
 
-export interface Instruction extends Enum {
+export interface InstructionV2 extends Enum {
   readonly isWithdrawAsset: boolean
   readonly asWithdrawAsset: MultiAssets
   readonly isReserveAssetDeposited: boolean
@@ -266,119 +237,111 @@ export interface Instruction extends Enum {
   readonly isReceiveTeleportedAsset: boolean
   readonly asReceiveTeleportedAsset: MultiAssets
   readonly isQueryResponse: boolean
-  readonly asQueryResponse: InstructionQueryResponse
+  readonly asQueryResponse: InstructionV2QueryResponse
   readonly isTransferAsset: boolean
-  readonly asTransferAsset: InstructionTransferAsset
+  readonly asTransferAsset: InstructionV2TransferAsset
   readonly isTransferReserveAsset: boolean
-  readonly asTransferReserveAsset: InstructionTransferReserveAsset
+  readonly asTransferReserveAsset: InstructionV2TransferReserveAsset
   readonly isTransact: boolean
-  readonly asTransact: InstructionTransact
+  readonly asTransact: InstructionV2Transact
   readonly isHrmpNewChannelOpenRequest: boolean
-  readonly asHrmpNewChannelOpenRequest: InstructionHrmpNewChannelOpenRequest
+  readonly asHrmpNewChannelOpenRequest: InstructionV2HrmpNewChannelOpenRequest
   readonly isHrmpChannelAccepted: boolean
-  readonly asHrmpChannelAccepted: InstructionHrmpChannelAccepted
+  readonly asHrmpChannelAccepted: InstructionV2HrmpChannelAccepted
   readonly isHrmpChannelClosing: boolean
-  readonly asHrmpChannelClosing: InstructionHrmpChannelClosing
+  readonly asHrmpChannelClosing: InstructionV2HrmpChannelClosing
   readonly isClearOrigin: boolean
   readonly isDescendOrigin: boolean
   readonly asDescendOrigin: Junctions
   readonly isReportError: boolean
-  readonly asReportError: InstructionReportError
+  readonly asReportError: InstructionV2ReportError
   readonly isDepositAsset: boolean
-  readonly asDepositAsset: InstructionDepositAsset
+  readonly asDepositAsset: InstructionV2DepositAsset
   readonly isDepositReserveAsset: boolean
-  readonly asDepositReserveAsset: InstructionDepositReserveAsset
+  readonly asDepositReserveAsset: InstructionV2DepositReserveAsset
   readonly isExchangeAsset: boolean
-  readonly asExchangeAsset: InstructionExchangeAsset
+  readonly asExchangeAsset: InstructionV2ExchangeAsset
   readonly isInitiateReserveWithdraw: boolean
-  readonly asInitiateReserveWithdraw: InstructionInitiateReserveWithdraw
+  readonly asInitiateReserveWithdraw: InstructionV2InitiateReserveWithdraw
   readonly isInitiateTeleport: boolean
-  readonly asInitiateTeleport: InstructionInitiateTeleport
+  readonly asInitiateTeleport: InstructionV2InitiateTeleport
   readonly isQueryHolding: boolean
-  readonly asQueryHolding: InstructionQueryHolding
+  readonly asQueryHolding: InstructionV2QueryHolding
   readonly isBuyExecution: boolean
-  readonly asBuyExecution: InstructionBuyExecution
+  readonly asBuyExecution: InstructionV2BuyExecution
   readonly isRefundSurplus: boolean
   readonly isSetErrorHandler: boolean
-  readonly asSetErrorHandler: Xcm_116
+  readonly asSetErrorHandler: XcmV2
   readonly isSetAppendix: boolean
-  readonly asSetAppendix: Xcm_116
+  readonly asSetAppendix: XcmV2
   readonly isClearError: boolean
   readonly isClaimAsset: boolean
-  readonly asClaimAsset: InstructionClaimAsset
+  readonly asClaimAsset: InstructionV2ClaimAsset
   readonly isTrap: boolean
   readonly asTrap: Compact<U64>
   readonly isSubscribeVersion: boolean
-  readonly asSubscribeVersion: InstructionSubscribeVersion
+  readonly asSubscribeVersion: InstructionV2SubscribeVersion
   readonly isUnsubscribeVersion: boolean
 }
 
-export interface MultiAssets extends Vec<MultiAsset> {}
+export interface MultiAssets extends Vec<MultiAssetV1> {}
 
-export interface Option_127 extends Enum {
-  readonly isNone: boolean
-  readonly isSome: boolean
-  readonly asSome: ITuple<[U32, Error]>
-}
-
-export interface MultiAsset_138 extends Enum {
+export interface MultiAssetV0 extends Enum {
   readonly isNone: boolean
   readonly isAll: boolean
   readonly isAllFungible: boolean
   readonly isAllNonFungible: boolean
   readonly isAllAbstractFungible: boolean
-  readonly asAllAbstractFungible: MultiAsset_138AllAbstractFungible
+  readonly asAllAbstractFungible: MultiAssetV0AllAbstractFungible
   readonly isAllAbstractNonFungible: boolean
-  readonly asAllAbstractNonFungible: MultiAsset_138AllAbstractNonFungible
+  readonly asAllAbstractNonFungible: MultiAssetV0AllAbstractNonFungible
   readonly isAllConcreteFungible: boolean
-  readonly asAllConcreteFungible: MultiAsset_138AllConcreteFungible
+  readonly asAllConcreteFungible: MultiAssetV0AllConcreteFungible
   readonly isAllConcreteNonFungible: boolean
-  readonly asAllConcreteNonFungible: MultiAsset_138AllConcreteNonFungible
+  readonly asAllConcreteNonFungible: MultiAssetV0AllConcreteNonFungible
   readonly isAbstractFungible: boolean
-  readonly asAbstractFungible: MultiAsset_138AbstractFungible
+  readonly asAbstractFungible: MultiAssetV0AbstractFungible
   readonly isAbstractNonFungible: boolean
-  readonly asAbstractNonFungible: MultiAsset_138AbstractNonFungible
+  readonly asAbstractNonFungible: MultiAssetV0AbstractNonFungible
   readonly isConcreteFungible: boolean
-  readonly asConcreteFungible: MultiAsset_138ConcreteFungible
+  readonly asConcreteFungible: MultiAssetV0ConcreteFungible
   readonly isConcreteNonFungible: boolean
-  readonly asConcreteNonFungible: MultiAsset_138ConcreteNonFungible
+  readonly asConcreteNonFungible: MultiAssetV0ConcreteNonFungible
 }
 
-export interface MultiLocation_139 extends Enum {
+export interface MultiLocationV0 extends Enum {
   readonly isNull: boolean
   readonly isX1: boolean
-  readonly asX1: Junction_140
+  readonly asX1: JunctionV0
   readonly isX2: boolean
-  readonly asX2: ITuple<[Junction_140, Junction_140]>
+  readonly asX2: ITuple<[JunctionV0, JunctionV0]>
   readonly isX3: boolean
-  readonly asX3: ITuple<[Junction_140, Junction_140, Junction_140]>
+  readonly asX3: ITuple<[JunctionV0, JunctionV0, JunctionV0]>
   readonly isX4: boolean
-  readonly asX4: ITuple<[Junction_140, Junction_140, Junction_140, Junction_140]>
+  readonly asX4: ITuple<[JunctionV0, JunctionV0, JunctionV0, JunctionV0]>
   readonly isX5: boolean
-  readonly asX5: ITuple<[Junction_140, Junction_140, Junction_140, Junction_140, Junction_140]>
+  readonly asX5: ITuple<[JunctionV0, JunctionV0, JunctionV0, JunctionV0, JunctionV0]>
   readonly isX6: boolean
-  readonly asX6: ITuple<[Junction_140, Junction_140, Junction_140, Junction_140, Junction_140, Junction_140]>
+  readonly asX6: ITuple<[JunctionV0, JunctionV0, JunctionV0, JunctionV0, JunctionV0, JunctionV0]>
   readonly isX7: boolean
-  readonly asX7: ITuple<[Junction_140, Junction_140, Junction_140, Junction_140, Junction_140, Junction_140, Junction_140]>
+  readonly asX7: ITuple<[JunctionV0, JunctionV0, JunctionV0, JunctionV0, JunctionV0, JunctionV0, JunctionV0]>
   readonly isX8: boolean
-  readonly asX8: ITuple<[Junction_140, Junction_140, Junction_140, Junction_140, Junction_140, Junction_140, Junction_140, Junction_140]>
+  readonly asX8: ITuple<[JunctionV0, JunctionV0, JunctionV0, JunctionV0, JunctionV0, JunctionV0, JunctionV0, JunctionV0]>
 }
 
-export interface Public_89 extends Public {}
-
-export interface Signature_90 extends Signature {}
+export interface Signature extends U8aFixed {}
 
 export interface ValidationCodeHash extends H256 {}
 
-export interface Junction extends Enum {
+export interface JunctionV1 extends Enum {
   readonly isParachain: boolean
   readonly asParachain: Compact<U32>
   readonly isAccountId32: boolean
-  readonly asAccountId32: JunctionAccountId32
+  readonly asAccountId32: JunctionV1AccountId32
   readonly isAccountIndex64: boolean
-  readonly asAccountIndex64: JunctionAccountIndex64
+  readonly asAccountIndex64: JunctionV1AccountIndex64
   readonly isAccountKey20: boolean
-  readonly asAccountKey20: JunctionAccountKey20
+  readonly asAccountKey20: JunctionV1AccountKey20
   readonly isPalletInstance: boolean
   readonly asPalletInstance: U8
   readonly isGeneralIndex: boolean
@@ -387,157 +350,157 @@ export interface Junction extends Enum {
   readonly asGeneralKey: Bytes
   readonly isOnlyChild: boolean
   readonly isPlurality: boolean
-  readonly asPlurality: JunctionPlurality
+  readonly asPlurality: JunctionV1Plurality
 }
 
-export interface InstructionQueryResponse extends Struct {
+export interface InstructionV2QueryResponse extends Struct {
   readonly queryId: Compact<U64>
-  readonly response: Response
+  readonly response: ResponseV2
   readonly maxWeight: Compact<U64>
 }
 
-export interface InstructionTransferAsset extends Struct {
+export interface InstructionV2TransferAsset extends Struct {
   readonly assets: MultiAssets
-  readonly beneficiary: MultiLocation
+  readonly beneficiary: MultiLocationV1
 }
 
-export interface InstructionTransferReserveAsset extends Struct {
+export interface InstructionV2TransferReserveAsset extends Struct {
   readonly assets: MultiAssets
-  readonly dest: MultiLocation
-  readonly xcm: Xcm_116
+  readonly dest: MultiLocationV1
+  readonly xcm: XcmV2
 }
 
-export interface InstructionTransact extends Struct {
+export interface InstructionV2Transact extends Struct {
   readonly originType: OriginKind
   readonly requireWeightAtMost: Compact<U64>
   readonly call: DoubleEncoded
 }
 
-export interface InstructionHrmpNewChannelOpenRequest extends Struct {
+export interface InstructionV2HrmpNewChannelOpenRequest extends Struct {
   readonly sender: Compact<U32>
   readonly maxMessageSize: Compact<U32>
   readonly maxCapacity: Compact<U32>
 }
 
-export interface InstructionHrmpChannelAccepted extends Struct {
+export interface InstructionV2HrmpChannelAccepted extends Struct {
   readonly recipient: Compact<U32>
 }
 
-export interface InstructionHrmpChannelClosing extends Struct {
+export interface InstructionV2HrmpChannelClosing extends Struct {
   readonly initiator: Compact<U32>
   readonly sender: Compact<U32>
   readonly recipient: Compact<U32>
 }
 
-export interface InstructionReportError extends Struct {
+export interface InstructionV2ReportError extends Struct {
   readonly queryId: Compact<U64>
-  readonly dest: MultiLocation
+  readonly dest: MultiLocationV1
   readonly maxResponseWeight: Compact<U64>
 }
 
-export interface InstructionDepositAsset extends Struct {
+export interface InstructionV2DepositAsset extends Struct {
   readonly assets: MultiAssetFilter
   readonly maxAssets: Compact<U32>
-  readonly beneficiary: MultiLocation
+  readonly beneficiary: MultiLocationV1
 }
 
-export interface InstructionDepositReserveAsset extends Struct {
+export interface InstructionV2DepositReserveAsset extends Struct {
   readonly assets: MultiAssetFilter
   readonly maxAssets: Compact<U32>
-  readonly dest: MultiLocation
-  readonly xcm: Xcm_116
+  readonly dest: MultiLocationV1
+  readonly xcm: XcmV2
 }
 
-export interface InstructionExchangeAsset extends Struct {
+export interface InstructionV2ExchangeAsset extends Struct {
   readonly give: MultiAssetFilter
   readonly receive: MultiAssets
 }
 
-export interface InstructionInitiateReserveWithdraw extends Struct {
+export interface InstructionV2InitiateReserveWithdraw extends Struct {
   readonly assets: MultiAssetFilter
-  readonly reserve: MultiLocation
-  readonly xcm: Xcm_116
+  readonly reserve: MultiLocationV1
+  readonly xcm: XcmV2
 }
 
-export interface InstructionInitiateTeleport extends Struct {
+export interface InstructionV2InitiateTeleport extends Struct {
   readonly assets: MultiAssetFilter
-  readonly dest: MultiLocation
-  readonly xcm: Xcm_116
+  readonly dest: MultiLocationV1
+  readonly xcm: XcmV2
 }
 
-export interface InstructionQueryHolding extends Struct {
+export interface InstructionV2QueryHolding extends Struct {
   readonly queryId: Compact<U64>
-  readonly dest: MultiLocation
+  readonly dest: MultiLocationV1
   readonly assets: MultiAssetFilter
   readonly maxResponseWeight: Compact<U64>
 }
 
-export interface InstructionBuyExecution extends Struct {
-  readonly fees: MultiAsset
+export interface InstructionV2BuyExecution extends Struct {
+  readonly fees: MultiAssetV1
   readonly weightLimit: WeightLimit
 }
 
-export interface InstructionClaimAsset extends Struct {
+export interface InstructionV2ClaimAsset extends Struct {
   readonly assets: MultiAssets
-  readonly ticket: MultiLocation
+  readonly ticket: MultiLocationV1
 }
 
-export interface InstructionSubscribeVersion extends Struct {
+export interface InstructionV2SubscribeVersion extends Struct {
   readonly queryId: Compact<U64>
   readonly maxResponseWeight: Compact<U64>
 }
 
-export interface MultiAsset extends Struct {
+export interface MultiAssetV1 extends Struct {
   readonly id: AssetId
   readonly fun: Fungibility
 }
 
-export interface MultiAsset_138AllAbstractFungible extends Struct {
+export interface MultiAssetV0AllAbstractFungible extends Struct {
   readonly id: Bytes
 }
 
-export interface MultiAsset_138AllAbstractNonFungible extends Struct {
+export interface MultiAssetV0AllAbstractNonFungible extends Struct {
   readonly class: Bytes
 }
 
-export interface MultiAsset_138AllConcreteFungible extends Struct {
-  readonly id: MultiLocation_139
+export interface MultiAssetV0AllConcreteFungible extends Struct {
+  readonly id: MultiLocationV0
 }
 
-export interface MultiAsset_138AllConcreteNonFungible extends Struct {
-  readonly class: MultiLocation_139
+export interface MultiAssetV0AllConcreteNonFungible extends Struct {
+  readonly class: MultiLocationV0
 }
 
-export interface MultiAsset_138AbstractFungible extends Struct {
+export interface MultiAssetV0AbstractFungible extends Struct {
   readonly id: Bytes
   readonly amount: Compact<U128>
 }
 
-export interface MultiAsset_138AbstractNonFungible extends Struct {
+export interface MultiAssetV0AbstractNonFungible extends Struct {
   readonly class: Bytes
   readonly instance: AssetInstance
 }
 
-export interface MultiAsset_138ConcreteFungible extends Struct {
-  readonly id: MultiLocation_139
+export interface MultiAssetV0ConcreteFungible extends Struct {
+  readonly id: MultiLocationV0
   readonly amount: Compact<U128>
 }
 
-export interface MultiAsset_138ConcreteNonFungible extends Struct {
-  readonly class: MultiLocation_139
+export interface MultiAssetV0ConcreteNonFungible extends Struct {
+  readonly class: MultiLocationV0
   readonly instance: AssetInstance
 }
 
-export interface Junction_140 extends Enum {
+export interface JunctionV0 extends Enum {
   readonly isParent: boolean
   readonly isParachain: boolean
   readonly asParachain: Compact<U32>
   readonly isAccountId32: boolean
-  readonly asAccountId32: Junction_140AccountId32
+  readonly asAccountId32: JunctionV0AccountId32
   readonly isAccountIndex64: boolean
-  readonly asAccountIndex64: Junction_140AccountIndex64
+  readonly asAccountIndex64: JunctionV0AccountIndex64
   readonly isAccountKey20: boolean
-  readonly asAccountKey20: Junction_140AccountKey20
+  readonly asAccountKey20: JunctionV0AccountKey20
   readonly isPalletInstance: boolean
   readonly asPalletInstance: U8
   readonly isGeneralIndex: boolean
@@ -546,27 +509,25 @@ export interface Junction_140 extends Enum {
   readonly asGeneralKey: Bytes
   readonly isOnlyChild: boolean
   readonly isPlurality: boolean
-  readonly asPlurality: Junction_140Plurality
+  readonly asPlurality: JunctionV0Plurality
 }
 
-export interface Signature extends U8aFixed {}
-
-export interface JunctionAccountId32 extends Struct {
+export interface JunctionV1AccountId32 extends Struct {
   readonly network: NetworkId
   readonly id: U8aFixed
 }
 
-export interface JunctionAccountIndex64 extends Struct {
+export interface JunctionV1AccountIndex64 extends Struct {
   readonly network: NetworkId
   readonly index: Compact<U64>
 }
 
-export interface JunctionAccountKey20 extends Struct {
+export interface JunctionV1AccountKey20 extends Struct {
   readonly network: NetworkId
   readonly key: U8aFixed
 }
 
-export interface JunctionPlurality extends Struct {
+export interface JunctionV1Plurality extends Struct {
   readonly id: BodyId
   readonly part: BodyPart
 }
@@ -597,7 +558,7 @@ export interface WeightLimit extends Enum {
 
 export interface AssetId extends Enum {
   readonly isConcrete: boolean
-  readonly asConcrete: MultiLocation
+  readonly asConcrete: MultiLocationV1
   readonly isAbstract: boolean
   readonly asAbstract: Bytes
 }
@@ -625,22 +586,22 @@ export interface AssetInstance extends Enum {
   readonly asBlob: Bytes
 }
 
-export interface Junction_140AccountId32 extends Struct {
+export interface JunctionV0AccountId32 extends Struct {
   readonly network: NetworkId
   readonly id: U8aFixed
 }
 
-export interface Junction_140AccountIndex64 extends Struct {
+export interface JunctionV0AccountIndex64 extends Struct {
   readonly network: NetworkId
   readonly index: Compact<U64>
 }
 
-export interface Junction_140AccountKey20 extends Struct {
+export interface JunctionV0AccountKey20 extends Struct {
   readonly network: NetworkId
   readonly key: U8aFixed
 }
 
-export interface Junction_140Plurality extends Struct {
+export interface JunctionV0Plurality extends Struct {
   readonly id: BodyId
   readonly part: BodyPart
 }

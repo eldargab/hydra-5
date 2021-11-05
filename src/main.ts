@@ -1,6 +1,9 @@
 import {ApiPromise, WsProvider} from "@polkadot/api"
-import {Interfaces} from "./gen"
-import {OutDir} from "./out"
+import * as fs from "fs"
+import Table from "easy-table"
+import {Interfaces} from "./ifs"
+import {getTypesCount, TypeHasher} from "./metadata"
+import {OutDir} from "./util/out"
 
 
 async function chain(): Promise<ApiPromise> {
@@ -12,7 +15,23 @@ async function chain(): Promise<ApiPromise> {
 async function main(): Promise<void> {
     let api = await chain()
     let metadata = api.runtimeMetadata.asLatest
-    // print(metadata)
+
+    fs.writeFileSync('metadata.json', JSON.stringify(metadata, null, 2))
+
+    // let hasher = new TypeHasher(metadata)
+    // let table = new Table()
+    // for (let i = 0; i < getTypesCount(metadata); i++) {
+    //     let type = metadata.lookup.getSiType(i)
+    //     if (type.path.length > 0) {
+    //         table.cell('name', type.path[type.path.length - 1])
+    //         table.cell('idx', i)
+    //         table.cell('hash', hasher.getHash(i))
+    //         table.newRow()
+    //     }
+    // }
+    // table.sort(['name', 'idx'])
+    // console.log(table.print())
+
     let src = new OutDir('src')
     let ifsFile = src.file('_interfaces.ts')
     let ifs = new Interfaces(metadata, ifsFile)

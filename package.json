@@ -4,6 +4,10 @@
   "dependencies": {
     "@polkadot/api": "^6.5.2",
     "@polkadot/types": "^6.5.2",
-    "@polkadot/util": "^7.6.1"
+    "@polkadot/util": "^7.6.1",
+    "easy-table": "^1.2.0"
+  },
+  "devDependencies": {
+    "typescript": "~4.4.4"
   }
 }
