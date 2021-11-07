@@ -2,24 +2,25 @@ import type {Text, Vec} from "@polkadot/types"
 import type {MetadataLatest, SiField, SiLookupTypeId, SiType} from "@polkadot/types/interfaces"
 import {stringCamelCase} from "@polkadot/util"
 import assert from "assert"
-import {Imports, isReservedTypeName} from "./imports"
-import {getHash, getTypesCount, Ti} from "./metadata"
-import {Output} from "./util/out"
+import {Imports, isReservedTypeName, POLKADOT_LIB} from "./imports"
+import {forEachType, getHash, getTypesCount, Ti} from "./metadata"
+import type {FileOutput, Output} from "./util/out"
 
 
 export class Interfaces {
-    private names: Map<Ti, string>
+    private nameAssignment: Map<Ti, string>
+    public readonly names: ReadonlySet<string>
     private generated: (string | undefined)[]
-    private imports = new Imports()
-    private queue: (() => void)[] = []
+    private imports: Imports
+    private queue: ((out: Output) => void)[] = []
 
     constructor(
-        private metadata: MetadataLatest,
-        private out: Output
+        private metadata: MetadataLatest
     ) {
-        this.names = assignNames(this.metadata)
+        this.nameAssignment = assignNames(this.metadata)
+        this.names = new Set(this.nameAssignment.values())
         this.generated = new Array(getTypesCount(this.metadata))
-        this.out.lazy(() => this.imports.render())
+        this.imports = new Imports(hasHistoricTypes(this.metadata) ? [POLKADOT_LIB] : [])
     }
 
     use(ti: Ti): string {
@@ -74,13 +75,13 @@ export class Interfaces {
                 name = this.use(fields[0].type.toNumber())
             } else {
                 name = this.getName(ti)
-                this.queue.push(() => {
-                    this.out.line()
-                    this.docs(type.docs)
+                this.queue.push(out => {
+                    out.line()
+                    printDocs(out, type.docs)
                     if (fields[0].name.isNone) {
-                        this.out.line(`export interface ${name} extends ${this.genTuple(fields.map(f => f.type))} {}`)
+                        out.line(`export interface ${name} extends ${this.genTuple(fields.map(f => f.type))} {}`)
                     } else {
-                        this.printStruct(name!, fields)
+                        this.printStruct(out, name!, fields)
                     }
                 })
             }
@@ -98,32 +99,35 @@ export class Interfaces {
                 name = `Result<${rt}, ${et}>`
             } else {
                 name = this.getName(ti)
-                this.queue.push(() => {
+                this.queue.push(out => {
                     this.imports.use('Enum')
-                    this.out.line()
-                    this.docs(type.docs)
-                    this.out.block(`export interface ${name} extends Enum`, () => {
+                    out.line()
+                    printDocs(out, type.docs)
+                    out.block(`export interface ${name} extends Enum`, () => {
                         def.asVariant.variants.forEach(v => {
-                            this.docs(v.docs)
-                            this.out.line(`readonly is${v.name.toString()}: boolean`)
+                            printDocs(out, v.docs)
+                            out.line(`readonly is${v.name.toString()}: boolean`)
                             if (v.fields.length > 0) {
                                 let vt: string
                                 if (v.fields[0].name.isNone) {
                                     vt = this.genTuple(v.fields.map(f => f.type))
                                 } else {
                                     vt = name + v.name.toString()
-                                    this.queue.push(() => {
-                                        this.out.line()
-                                        this.docs(v.docs)
-                                        this.printStruct(vt, v.fields)
+                                    this.queue.push(out => {
+                                        out.line()
+                                        printDocs(out, v.docs)
+                                        this.printStruct(out, vt, v.fields)
                                     })
                                 }
-                                this.out.line(`readonly as${v.name.toString()}: ${vt}`)
+                                out.line(`readonly as${v.name.toString()}: ${vt}`)
                             }
                         })
                     })
                 })
             }
+        } else if (def.isHistoricMetaCompat) {
+            name = def.asHistoricMetaCompat.toString()
+            splitType(name).forEach(t => this.imports.use(t))
         } else {
             throw new Error(`Unsupported type: ${type.toString()}`)
         }
@@ -144,33 +148,40 @@ export class Interfaces {
         }
     }
 
-    private printStruct(name: string, fields: SiField[]): void {
+    private printStruct(out: Output, name: string, fields: SiField[]): void {
         this.imports.use('Struct')
-        this.out.block(`export interface ${name} extends Struct`, () => {
+        out.block(`export interface ${name} extends Struct`, () => {
             fields.forEach(f => {
                 let fieldName = stringCamelCase(f.name.unwrap().toString())
                 let fieldType = this.use(f.type.toNumber())
-                this.docs(f.docs)
-                this.out.line(`readonly ${fieldName}: ${fieldType}`)
+                printDocs(out, f.docs)
+                out.line(`readonly ${fieldName}: ${fieldType}`)
             })
         })
     }
 
     private getName(ti: Ti): string {
-        let name = this.names.get(ti)
+        let name = this.nameAssignment.get(ti)
         assert(name != null, `Name was not allocated for type ${ti}`)
         return name
     }
 
-    private docs(docs: Vec<Text>): void {
-        this.out.blockComment(docs.map(line => line.toString()))
-    }
-
-    generate(): void {
+    generate(out: Output): void {
+        out.lazy(() => this.imports.render())
         for (let i = 0; i < this.queue.length; i++) {
-            this.queue[i]()
+            this.queue[i](out)
         }
     }
+
+    write(file: FileOutput): void {
+        this.generate(file)
+        file.write()
+    }
+}
+
+
+function printDocs(out: Output, docs: Vec<Text>): void {
+    out.blockComment(docs.map(line => line.toString()))
 }
 
 
@@ -203,13 +214,21 @@ function assignNames(metadata: MetadataLatest): Map<Ti, string> {
         usedNames.add(name)
     }
 
+    let reservedNames = new Set<string>()
+    forEachType(metadata, type => {
+        if (type.def.isHistoricMetaCompat) {
+            let names = splitType(type.def.asHistoricMetaCompat.toString())
+            names.forEach(name => reservedNames.add(name))
+        }
+    })
+
     let names = nameUsage(metadata)
 
     let refs = computeRefCounts(metadata)
     names.forEach(list => list.sort((a, b) => refs[b] - refs[a]))
 
     names.forEach((types, name) => {
-        if (isReservedTypeName(name)) {
+        if (isReservedTypeName(name) || reservedNames.has(name)) {
             types.forEach(ti => {
                 assign(ti, `${name}_${ti}`)
             })
@@ -263,7 +282,8 @@ function assignNames(metadata: MetadataLatest): Map<Ti, string> {
  */
 function nameUsage(metadata: MetadataLatest): Map<string, Ti[]> {
     let names = new Map<string, Ti[]>()
-    forEachNamedType(metadata, (type, ti) => {
+    forEachType(metadata, (type, ti) => {
+        if (!isNamedType(type)) return
         let name = getSimpleName(type)
         let list = names.get(name)
         if (list == null) {
@@ -276,18 +296,8 @@ function nameUsage(metadata: MetadataLatest): Map<string, Ti[]> {
 }
 
 
-function forEachNamedType(metadata: MetadataLatest, cb: (type: SiType, ti: Ti) => void): void {
-    for (let i = 0; i < getTypesCount(metadata); i++) {
-        let type = metadata.lookup.getSiType(i)
-        if (isNamedType(type)) {
-            cb(type, i)
-        }
-    }
-}
-
-
 /**
- * Does `type` require a name allocation
+ * Does `type` require a name allocation?
  */
 function isNamedType(type: SiType): boolean {
     return type.def.isComposite || type.def.isVariant
@@ -332,4 +342,26 @@ function computeRefCounts(metadata: MetadataLatest): number[] {
     }
 
     return counts
+}
+
+
+/**
+ * Given a type expression, return a list of referenced names (possibly with duplicates).
+ *
+ * E.g. `splitTypes('Account<Balance>') === new Set(['Account', 'Balance'])`
+ */
+function splitType(type: string): string[] {
+    return type
+        .split(/[<>&|,()]/)
+        .map((t) => t.trim())
+        .filter((t) => !!t)
+}
+
+
+function hasHistoricTypes(metadata: MetadataLatest): boolean {
+    for (let i = 0; i < getTypesCount(metadata); i++) {
+        let def = metadata.lookup.getSiType(i).def
+        if (def.isHistoricMetaCompat) return true
+    }
+    return false
 }

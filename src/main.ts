@@ -14,27 +14,14 @@ async function chain(): Promise<ApiPromise> {
 
 async function main(): Promise<void> {
     let api = await chain()
-    let metadata = api.runtimeMetadata.asLatest
+
+    let blockHash = await api.rpc.chain.getBlockHash(8000000)
+    let metadata = (await api.at(blockHash)).registry.metadata
 
     fs.writeFileSync('metadata.json', JSON.stringify(metadata, null, 2))
 
-    // let hasher = new TypeHasher(metadata)
-    // let table = new Table()
-    // for (let i = 0; i < getTypesCount(metadata); i++) {
-    //     let type = metadata.lookup.getSiType(i)
-    //     if (type.path.length > 0) {
-    //         table.cell('name', type.path[type.path.length - 1])
-    //         table.cell('idx', i)
-    //         table.cell('hash', hasher.getHash(i))
-    //         table.newRow()
-    //     }
-    // }
-    // table.sort(['name', 'idx'])
-    // console.log(table.print())
-
     let src = new OutDir('src')
-    let ifsFile = src.file('_interfaces.ts')
-    let ifs = new Interfaces(metadata, ifsFile)
+    let ifs = new Interfaces(metadata)
 
     metadata.pallets.forEach(p => {
         if (p.events.isNone) return
@@ -44,8 +31,7 @@ async function main(): Promise<void> {
         })
     })
 
-    ifs.generate()
-    ifsFile.write()
+    ifs.write(src.file('_interfaces.ts'))
 }
 
 

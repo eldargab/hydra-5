@@ -1,4 +1,4 @@
-import type {MetadataLatest} from "@polkadot/types/interfaces"
+import type {MetadataLatest, SiType} from "@polkadot/types/interfaces"
 import assert from "assert"
 import * as crypto from 'crypto'
 
@@ -11,16 +11,21 @@ export type Ti = number
 const HASHERS = new WeakMap<MetadataLatest, TypeHasher>()
 
 
-/**
- * Get a strong hash of substrate type, which can be used for equality derivation
- */
-export function getHash(metadata: MetadataLatest, type: Ti): string {
+export function getTypeHasher(metadata: MetadataLatest): TypeHasher {
     let hasher = HASHERS.get(metadata)
     if (hasher == null) {
         hasher = new TypeHasher(metadata)
         HASHERS.set(metadata, hasher)
     }
-    return hasher.getHash(type)
+    return hasher
+}
+
+
+/**
+ * Get a strong hash of substrate type, which can be used for equality derivation
+ */
+export function getHash(metadata: MetadataLatest, type: Ti): string {
+    return getTypeHasher(metadata).getHash(type)
 }
 
 
@@ -204,6 +209,9 @@ export class TypeHasher {
             })
             return {variant: desc}
         }
+        if (def.isHistoricMetaCompat) {
+            return {historic: def.asHistoricMetaCompat.toString()}
+        }
         throw new Error(`Unsupported type: ${def.toString()}`)
     }
 }
@@ -211,4 +219,12 @@ export class TypeHasher {
 
 export function getTypesCount(metadata: MetadataLatest): number {
     return metadata.lookup.types.length
+}
+
+
+export function forEachType(metadata: MetadataLatest, cb: (type: SiType, ti: Ti) => void): void {
+    for (let i = 0; i < getTypesCount(metadata); i++) {
+        let type = metadata.lookup.getSiType(i)
+        cb(type, i)
+    }
 }

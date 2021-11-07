@@ -86,4 +86,8 @@ export class OutDir {
         fs.mkdirSync(path.dirname(dst), { recursive: true })
         fs.writeFileSync(dst, content)
     }
+
+    child(name: string): OutDir {
+        return new OutDir(path.join(this.dir, name))
+    }
 }
