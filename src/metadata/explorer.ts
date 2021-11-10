@@ -1,15 +1,7 @@
 import {ApiPromise} from "@polkadot/api"
-import {MetadataLatest} from "@polkadot/types/interfaces"
 import assert from "assert"
-import {indexerRequest} from "./util/indexer"
-
-
-export interface Spec {
-    version: number
-    blockNumber: number
-    blockHash: string
-    metadata: MetadataLatest
-}
+import {indexerRequest} from "../util/indexer"
+import {Spec} from "./native"
 
 
 type Version = Omit<Spec, 'metadata'>
@@ -84,6 +76,13 @@ export async function getSpecVersionsFromChainAndIndexer(api: ApiPromise, indexe
                 queue.push([m, e])
             }
         })
+    }
+
+    for (let i = 0; i < versions.length; i++) {
+        let v = versions[i]
+        let metadata = await api.rpc.state.getMetadata(v.blockHash)
+        specs.push({...v, metadata: metadata.asLatest})
+        console.log(`Fetched metadata for block ${v.blockNumber}`)
     }
 
     specs.sort((a, b) => a.blockNumber - b.blockNumber)

@@ -1,11 +1,7 @@
-import type {MetadataLatest, SiType} from "@polkadot/types/interfaces"
+import {MetadataLatest} from "@polkadot/types/interfaces"
 import assert from "assert"
-import * as crypto from 'crypto'
-
-/**
- * Index of a type in metadata lookup table
- */
-export type Ti = number
+import crypto from "crypto"
+import {getTypesCount, Ti} from "./native"
 
 
 const HASHERS = new WeakMap<MetadataLatest, TypeHasher>()
@@ -24,10 +20,9 @@ export function getTypeHasher(metadata: MetadataLatest): TypeHasher {
 /**
  * Get a strong hash of substrate type, which can be used for equality derivation
  */
-export function getHash(metadata: MetadataLatest, type: Ti): string {
+export function getTypeHash(metadata: MetadataLatest, type: Ti): string {
     return getTypeHasher(metadata).getHash(type)
 }
-
 
 /**
  * https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm
@@ -39,7 +34,6 @@ interface HashNode {
     hash: string
     component?: number
 }
-
 
 /**
  * Computes hashes of substrate types for the purpose of equality derivation.
@@ -213,18 +207,5 @@ export class TypeHasher {
             return {historic: def.asHistoricMetaCompat.toString()}
         }
         throw new Error(`Unsupported type: ${def.toString()}`)
-    }
-}
-
-
-export function getTypesCount(metadata: MetadataLatest): number {
-    return metadata.lookup.types.length
-}
-
-
-export function forEachType(metadata: MetadataLatest, cb: (type: SiType, ti: Ti) => void): void {
-    for (let i = 0; i < getTypesCount(metadata); i++) {
-        let type = metadata.lookup.getSiType(i)
-        cb(type, i)
     }
 }

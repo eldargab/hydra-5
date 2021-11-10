@@ -2,9 +2,10 @@ import type {Text, Vec} from "@polkadot/types"
 import type {MetadataLatest, SiField, SiLookupTypeId, SiType} from "@polkadot/types/interfaces"
 import {stringCamelCase} from "@polkadot/util"
 import assert from "assert"
+import {getTypeHash} from "../metadata/hash"
 import {Imports, isReservedTypeName, POLKADOT_LIB} from "./imports"
-import {forEachType, getHash, getTypesCount, Ti} from "./metadata"
-import type {FileOutput, Output} from "./util/out"
+import {forEachType, getTypesCount, Ti} from "../metadata/native"
+import type {FileOutput, Output} from "../util/out"
 
 
 export class Interfaces {
@@ -237,7 +238,7 @@ function assignNames(metadata: MetadataLatest): Map<Ti, string> {
 
         let unique = new Map<string, Ti>()
         types.forEach(ti => {
-            let hash = getHash(metadata, ti)
+            let hash = getTypeHash(metadata, ti)
             if (unique.has(hash)) return
             unique.set(hash, ti)
         })
@@ -265,7 +266,7 @@ function assignNames(metadata: MetadataLatest): Map<Ti, string> {
         })
 
         types.forEach(ti => {
-            let alias = unique.get(getHash(metadata, ti))
+            let alias = unique.get(getTypeHash(metadata, ti))
             assert(alias != null)
             let name = assignment.get(alias)
             assert(name != null)
