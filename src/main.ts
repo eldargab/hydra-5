@@ -1,13 +1,12 @@
 import {ApiPromise, WsProvider} from "@polkadot/api"
 import * as fs from "fs"
-import Table from "easy-table"
+import {getSpecVersions} from "./chain"
 import {Interfaces} from "./ifs"
-import {getTypesCount, TypeHasher} from "./metadata"
 import {OutDir} from "./util/out"
 
 
 async function chain(): Promise<ApiPromise> {
-    let provider = new WsProvider('wss://kusama-rpc.polkadot.io')
+    let provider = new WsProvider('wss://kusama.api.onfinality.io/public-ws')
     return await ApiPromise.create({provider})
 }
 
@@ -15,23 +14,26 @@ async function chain(): Promise<ApiPromise> {
 async function main(): Promise<void> {
     let api = await chain()
 
-    let blockHash = await api.rpc.chain.getBlockHash(8000000)
-    let metadata = (await api.at(blockHash)).registry.metadata
+    let specs = await getSpecVersions(api, 'https://kusama.indexer.gc.subsquid.io/v4/graphql')
 
-    fs.writeFileSync('metadata.json', JSON.stringify(metadata, null, 2))
-
-    let src = new OutDir('src')
-    let ifs = new Interfaces(metadata)
-
-    metadata.pallets.forEach(p => {
-        if (p.events.isNone) return
-        let events = metadata.lookup.getSiType(p.events.unwrap().type).def.asVariant.variants
-        events.forEach(e => {
-            e.fields.forEach(f => ifs.use(f.type.toNumber()))
-        })
-    })
-
-    ifs.write(src.file('_interfaces.ts'))
+    // let blockHash = await api.rpc.chain.getBlockHash(8000000)
+    // let at = await api.at(blockHash)
+    // let metadata = at.registry.metadata
+    //
+    // fs.writeFileSync('metadata.json', JSON.stringify(metadata, null, 2))
+    //
+    // let src = new OutDir('src')
+    // let ifs = new Interfaces(metadata)
+    //
+    // metadata.pallets.forEach(p => {
+    //     if (p.events.isNone) return
+    //     let events = metadata.lookup.getSiType(p.events.unwrap().type).def.asVariant.variants
+    //     events.forEach(e => {
+    //         e.fields.forEach(f => ifs.use(f.type.toNumber()))
+    //     })
+    // })
+    //
+    // ifs.write(src.file('_interfaces.ts'))
 }
 
 
