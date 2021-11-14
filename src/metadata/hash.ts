@@ -1,7 +1,7 @@
 import {MetadataLatest} from "@polkadot/types/interfaces"
 import assert from "assert"
-import crypto from "crypto"
-import {getTypesCount, Ti} from "./native"
+import {sha256} from "../util/sha256"
+import {getTypesCount, Ti} from "./base"
 
 
 const HASHERS = new WeakMap<MetadataLatest, TypeHasher>()
@@ -118,7 +118,7 @@ export class TypeHasher {
         this.index += 1
         this.nodes[ti] = node
         this.stack.push(ti)
-        let hash = node.hash = this.computeHash(ti, node)
+        let hash = node.hash = sha256(this.makeHash(ti, node))
         if (node.index == node.lowIndex) {
             let n
             do {
@@ -132,13 +132,6 @@ export class TypeHasher {
             parent.lowIndex = Math.min(parent.lowIndex, node.lowIndex)
         }
         return hash
-    }
-
-    private computeHash(ti: Ti, parent: HashNode): string {
-        let obj = this.makeHash(ti, parent)
-        let hash = crypto.createHash('sha256')
-        hash.update(JSON.stringify(obj))
-        return hash.digest().toString('hex')
     }
 
     private makeHash(ti: Ti, parent: HashNode): object {

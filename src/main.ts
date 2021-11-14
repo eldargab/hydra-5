@@ -1,34 +1,41 @@
 import {ApiPromise, WsProvider} from "@polkadot/api"
-import {getSpecVersionsAt} from "./metadata/explorer"
+import {SpecCache} from "./metadata/cache"
 import {Typegen} from "./typegen/gen"
 import {OutDir} from "./util/out"
 
 
 async function chain(): Promise<ApiPromise> {
-    let provider = new WsProvider('wss://kusama.api.onfinality.io/public-ws')
+    let provider = new WsProvider('wss://kusama-rpc.polkadot.io/')
     return await ApiPromise.create({provider})
 }
 
 
 async function main(): Promise<void> {
-    let api = await chain()
+    // let api = await chain()
+    // let spec = await getSpecVersionsFromChainAndIndexer(api, 'https://kusama.indexer.gc.subsquid.io/v4/graphql', 'chainSpec.json')
+    let chainSpec = SpecCache.read('chainSpec.json').sort((a, b) => a.specVersion - b.specVersion)
 
-    let specs = await getSpecVersionsAt(api, [
-        0,
-        5000000,
-        10000000
-    ])
+    let projectDir = new OutDir('src/a-project')
+    let typesDir = projectDir.child('types')
+    typesDir.del()
 
-    let typegen = new Typegen({
-        chainSpec: specs,
-        outDir: new OutDir('src/_gen'),
+    Typegen.generate({
+        outDir: typesDir,
+        chainSpec,
         events: [
             'balances.Transfer',
-            'staking.Reward'
+            'balances.Deposit',
+            'treasury.Deposit',
+            'staking.Reward',
+            'staking.StakingElection',
+            'staking.Slash',
+            'staking.StakersElected',
+            'staking.Rewarded',
+            'staking.Slashed',
+            'staking.Bonded',
+            'staking.Unbonded'
         ]
     })
-
-    let events = typegen.events()
 }
 
 

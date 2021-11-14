@@ -1,3 +1,5 @@
+import assert from "assert"
+
 
 export function arrayEquals<T>(a: T[], b: T[], eq?: (a: T, b: T) => boolean): boolean {
     if (a.length !== b.length) return false
@@ -11,6 +13,37 @@ export function arrayEquals<T>(a: T[], b: T[], eq?: (a: T, b: T) => boolean): bo
 
 function identity(a: unknown, b: unknown): boolean {
     return a === b
+}
+
+
+export function lowerCaseFirst(s: string): string {
+    if (s) {
+        return s[0].toLowerCase() + s.slice(1)
+    } else {
+        return s
+    }
+}
+
+
+export function groupBy<T, G>(arr: T[], group: (t: T) => G): Map<G, T[]> {
+    let grouping = new Map<G, T[]>()
+    for (let i = 0; i < arr.length; i++) {
+        let item = arr[i]
+        let key = group(item)
+        let g = grouping.get(key)
+        if (g == null) {
+            grouping.set(key, [item])
+        } else {
+            g.push(item)
+        }
+    }
+    return grouping
+}
+
+
+export function assertNotNull<T>(val: T | undefined | null, msg?: string): T {
+    assert(val != null, msg)
+    return val
 }
 
 

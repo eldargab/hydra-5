@@ -59,7 +59,7 @@ export class Output {
 
 
 export class FileOutput extends Output {
-    constructor(private file: string) {
+    constructor(public readonly file: string) {
         super()
     }
 
@@ -89,5 +89,9 @@ export class OutDir {
 
     child(name: string): OutDir {
         return new OutDir(path.join(this.dir, name))
+    }
+
+    mkdir(): void {
+        fs.mkdirSync(this.dir, { recursive: true })
     }
 }

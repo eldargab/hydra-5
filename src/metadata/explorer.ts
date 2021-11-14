@@ -1,7 +1,8 @@
 import {ApiPromise} from "@polkadot/api"
 import assert from "assert"
 import {indexerRequest} from "../util/indexer"
-import {Spec} from "./native"
+import {Spec, SpecVersion} from "./base"
+import {SpecCache} from "./cache"
 
 
 type Version = Omit<Spec, 'metadata'>
@@ -18,16 +19,7 @@ export async function getSpecVersionsAt(api: ApiPromise, heights: number[]): Pro
 }
 
 
-export function getSpecVersions(api: ApiPromise, indexerUrl?: string): Promise<Spec[]> {
-    if (indexerUrl) {
-        return getSpecVersionsFromChainAndIndexer(api, indexerUrl)
-    } else {
-        return getSpecVersionsFromChain(api)
-    }
-}
-
-
-export async function getSpecVersionsFromChainAndIndexer(api: ApiPromise, indexerUrl: string): Promise<Spec[]> {
+export async function getSpecVersionsFromChainAndIndexer(api: ApiPromise, indexerUrl: string, specFile?: string): Promise<Spec[]> {
     let height: number = await indexerRequest(indexerUrl, `
         query {
             indexerStatus {
@@ -36,25 +28,20 @@ export async function getSpecVersionsFromChainAndIndexer(api: ApiPromise, indexe
         }
     `).then(res => res.indexerStatus.head)
 
-    let specs: Spec[] = []
+    let versions = new Map<SpecVersion, Version>()
+    let queue: [Version, Version][] = []
 
-    specs.push(await getSpecAt(api, 0))
-    specs.push(await getSpecAt(api, height))
-
-    if (specs[1].version === specs[0].version) {
-        specs.pop()
-        return specs
+    function setVersion(v: Version): void {
+        versions.set(v.specVersion, v)
     }
 
-    if (height <= 1) {
-        return specs
+    let beg = await getVersionAt(api, 0)
+    let end = await getVersionAt(api, height)
+    setVersion(beg)
+    if (end.specVersion !== beg.specVersion) {
+        setVersion(end)
+        queue.push([beg, end])
     }
-
-    let versions: Version[] = []
-
-    let queue: [Version, Version][] = [
-        [specs[0], specs[1]]
-    ]
 
     while (queue.length) {
         let batch = queue
@@ -66,33 +53,40 @@ export async function getSpecVersionsFromChainAndIndexer(api: ApiPromise, indexe
 
         batch.forEach(([b, e], idx) => {
             let m = middleVersions[idx]
-            if (b.version != m.version && m.version != e.version) {
-                versions.push(m)
+            if (b.specVersion != m.specVersion) {
+                setVersion(m)
             }
-            if (b.version != m.version && m.blockNumber - b.blockNumber > 1) {
+            if (b.specVersion != m.specVersion && m.blockNumber - b.blockNumber > 1) {
                 queue.push([b, m])
             }
-            if (m.version != e.version && e.blockNumber - m.blockNumber > 1) {
+            if (m.specVersion != e.specVersion && e.blockNumber - m.blockNumber > 1) {
                 queue.push([m, e])
             }
         })
     }
 
-    for (let i = 0; i < versions.length; i++) {
-        let v = versions[i]
-        let metadata = await api.rpc.state.getMetadata(v.blockHash)
-        specs.push({...v, metadata: metadata.asLatest})
-        console.log(`Fetched metadata for block ${v.blockNumber}`)
+    let specs: Spec[] = []
+    let specCache = specFile ? new SpecCache(specFile) : undefined
+    let versionList = Array.from(versions.values()).sort((a, b) => a.blockNumber - b.blockNumber)
+    for (let i = 0; i < versionList.length; i++) {
+        let v = versionList[i]
+        let spec = specCache?.get(v.specVersion)
+        if (spec == null) {
+            let metadata = await api.rpc.state.getMetadata(v.blockHash)
+            spec = {...v, metadata}
+            specCache?.add(spec)
+        }
+        specs.push(spec)
+        console.log(`Got metadata for block ${v.blockNumber}`)
     }
-
-    specs.sort((a, b) => a.blockNumber - b.blockNumber)
+    specCache?.save()
     return specs
 }
 
 
 async function getVersions(api: ApiPromise, indexerUrl: string, heights: number[]): Promise<Version[]> {
     let fields = heights.map(h => {
-        return `h${h}: substrate_block(where: {height: {_eq: ${h}}}) { version: runtimeVersion(path: "$.specVersion") blockNumber: height blockHash: hash }`
+        return `h${h}: substrate_block(where: {height: {_eq: ${h}}}) { specVersion: runtimeVersion(path: "$.specVersion") blockNumber: height blockHash: hash }`
     })
     let res = await indexerRequest(indexerUrl, `query { ${fields.join(' ')} }`)
     let versions: Version[] = []
@@ -111,59 +105,10 @@ async function getVersions(api: ApiPromise, indexerUrl: string, heights: number[
 }
 
 
-export async function getSpecVersionsFromChain(api: ApiPromise): Promise<Spec[]> {
-    let height = await getChainHeight(api)
-    let specs: Spec[] = []
-
-    specs.push(await getSpecAt(api, 0))
-    specs.push(await getSpecAt(api, height))
-
-    if (specs[1].version === specs[0].version) {
-        specs.pop()
-        return specs
-    }
-
-    let versions: Version[] = []
-
-    let queue: [Version, Version][] = [
-        [specs[0], specs[1]]
-    ]
-
-    while (queue.length) {
-        let [b, e] = queue.pop()!
-        console.log(`investigating range [${b.blockNumber}, ${e.blockNumber}], versions: [${b.version}, ${e.version}]`)
-        let h = b.blockNumber + Math.floor((e.blockNumber - b.blockNumber) / 2)
-        let m = await getVersionAt(api, h)
-        if (b.version != m.version && m.version != e.version) {
-            versions.push(m)
-        }
-        if (b.version != m.version && m.blockNumber - b.blockNumber > 1) {
-            queue.push([b, m])
-        }
-        if (m.version != e.version && e.blockNumber - m.blockNumber > 1) {
-            queue.push([m, e])
-        }
-    }
-
-    for (let i = 0; i < versions.length; i++) {
-        let v = versions[i]
-        let metadata = await api.rpc.state.getMetadata(v.blockHash)
-        specs.push({...v, metadata: metadata.asLatest})
-        console.log(`Fetched metadata for block ${v.blockNumber}`)
-    }
-
-    specs.sort((a, b) => a.blockNumber - b.blockNumber)
-    return specs
-}
-
-
-async function getSpecAt(api: ApiPromise, height: number): Promise<Spec> {
+export async function getSpecAt(api: ApiPromise, height: number): Promise<Spec> {
     let version = await getVersionAt(api, height)
     let metadata = await api.rpc.state.getMetadata(version.blockHash)
-    return {
-        ...version,
-        metadata: metadata.asLatest
-    }
+    return {...version, metadata}
 }
 
 
@@ -171,7 +116,7 @@ async function getVersionAt(api: ApiPromise, height: number): Promise<Version> {
     let hash = await api.rpc.chain.getBlockHash(height)
     let runtime = await api.rpc.state.getRuntimeVersion(hash)
     return {
-        version: runtime.specVersion.toNumber(),
+        specVersion: runtime.specVersion.toNumber(),
         blockNumber: height,
         blockHash: hash.toHex()
     }

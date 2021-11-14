@@ -4,7 +4,7 @@ import {stringCamelCase} from "@polkadot/util"
 import assert from "assert"
 import {getTypeHash} from "../metadata/hash"
 import {Imports, isReservedTypeName, POLKADOT_LIB} from "./imports"
-import {forEachType, getTypesCount, Ti} from "../metadata/native"
+import {forEachType, getTypesCount, Ti} from "../metadata/base"
 import type {FileOutput, Output} from "../util/out"
 
 
@@ -22,6 +22,23 @@ export class Interfaces {
         this.names = new Set(this.nameAssignment.values())
         this.generated = new Array(getTypesCount(this.metadata))
         this.imports = new Imports(hasHistoricTypes(this.metadata) ? [POLKADOT_LIB] : [])
+    }
+
+    isEmpty(): boolean {
+        return this.queue.length === 0
+    }
+
+    qualify(type: string, ns: string, imports?: Imports): string {
+        let names = splitType(type)
+        if (imports) {
+            let known = names.filter(name => !this.names.has(name))
+            known.forEach(name => imports.use(name))
+        }
+        let local = new Set(names.filter(name => this.names.has(name)))
+        local.forEach(name => {
+            type = type.replace(new RegExp(`\\b${name}\\b`, 'g'), ns + '.' + name)
+        })
+        return type
     }
 
     use(ti: Ti): string {
@@ -45,7 +62,7 @@ export class Interfaces {
             }
             name = `Compact<${param}>`
         } else if (def.isTuple) {
-            name = this.genTuple(def.asTuple)
+            name = this.genTuple(def.asTuple.map(t => t.toNumber()))
         } else if (def.isSequence) {
             let item = this.use(def.asSequence.type.toNumber())
             if (item === 'U8') {
@@ -80,7 +97,7 @@ export class Interfaces {
                     out.line()
                     printDocs(out, type.docs)
                     if (fields[0].name.isNone) {
-                        out.line(`export interface ${name} extends ${this.genTuple(fields.map(f => f.type))} {}`)
+                        out.line(`export interface ${name} extends ${this.genTuple(fields.map(f => f.type.toNumber()))} {}`)
                     } else {
                         this.printStruct(out, name!, fields)
                     }
@@ -111,7 +128,7 @@ export class Interfaces {
                             if (v.fields.length > 0) {
                                 let vt: string
                                 if (v.fields[0].name.isNone) {
-                                    vt = this.genTuple(v.fields.map(f => f.type))
+                                    vt = this.genTuple(v.fields.map(f => f.type.toNumber()))
                                 } else {
                                     vt = name + v.name.toString()
                                     this.queue.push(out => {
@@ -136,16 +153,16 @@ export class Interfaces {
         return this.generated[ti] = name
     }
 
-    private genTuple(types: SiLookupTypeId[]): string {
+    genTuple(types: Ti[]): string {
         switch(types.length) {
             case 0:
                 this.imports.use('Null')
                 return 'Null'
             case 1:
-                return this.use(types[0].toNumber())
+                return this.use(types[0])
             default:
                 this.imports.use('ITuple')
-                return `ITuple<[${types.map(t => this.use(t.toNumber())).join(', ')}]>`
+                return `ITuple<[${types.map(t => this.use(t)).join(', ')}]>`
         }
     }
 
@@ -353,7 +370,7 @@ function computeRefCounts(metadata: MetadataLatest): number[] {
  */
 function splitType(type: string): string[] {
     return type
-        .split(/[<>&|,()]/)
+        .split(/[<>&|,()\[\]]/)
         .map((t) => t.trim())
         .filter((t) => !!t)
 }

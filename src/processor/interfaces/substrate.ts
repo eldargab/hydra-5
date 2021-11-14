@@ -93,7 +93,7 @@ export interface SubstrateEvent {
     /**
      * Array of raw JSON object with event parameters
      */
-    params: Array<EventParam>
+    params: EventParam[]
 
     /**
      * Ordinal index in the event array of the current block
