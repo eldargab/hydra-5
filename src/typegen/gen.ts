@@ -22,7 +22,7 @@ export class Typegen {
 
     constructor(private options: TypegenOptions) {}
 
-    generate() {
+    private generate() {
         this.generateEvent()
         this.interfaces().forEach((ifs, specVersion) => {
             if (ifs.isEmpty()) return
