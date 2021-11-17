@@ -16,7 +16,7 @@ export interface Batch {
 }
 
 
-export function createBatches(hooks: Hooks): Batch[] {
+export function createBatches(hooks: Hooks, range?: Range): Batch[] {
     let batches: Batch[] = []
 
     hooks.pre.forEach(hook => {
@@ -48,7 +48,16 @@ export function createBatches(hooks: Hooks): Batch[] {
         })
     })
 
-    return mergeBatches(batches)
+    batches = mergeBatches(batches)
+
+    if (range != null) {
+        trimToStart(batches, range.from)
+        if (range.to != null) {
+            trimFromEnd(batches, range.to)
+        }
+    }
+
+    return batches
 }
 
 
@@ -116,37 +125,7 @@ function mergeHandlers<T>(a: Record<string, T[]>, b: Record<string, T[]>): Recor
 }
 
 
-export function nextBatch(batches: Batch[], size: number): Batch | undefined {
-    let b = batches.shift()
-    if (b == null) return undefined
-
-    let start = b.range.from
-    let end = start + size - 1
-    let batchEnd = b.range.to ?? Infinity
-    if (batchEnd <= end) return {
-        ...b,
-        range: {from: start, to: b.range.to}
-    }
-
-    let restSize = batchEnd - end
-    if (restSize < size) {
-        // make batches more even
-        end = start + Math.round((size + restSize) / 2) - 1
-    }
-
-    batches.unshift({
-        ...b,
-        range: {from: end + 1, to: b.range.to}
-    })
-
-    return {
-        ...b,
-        range: {from: start, to: end}
-    }
-}
-
-
-export function goToStartBatch(batches: Batch[], start: number): void {
+function trimToStart(batches: Batch[], start: number): void {
     let b: Batch | undefined
     while (b = batches[0]) {
         let end = b.range.to ?? Infinity
@@ -158,6 +137,24 @@ export function goToStartBatch(batches: Batch[], start: number): void {
             return
         } else {
             batches.shift()
+        }
+    }
+}
+
+
+function trimFromEnd(batches: Batch[], end: number): void {
+    for (let i = 0; i < batches.length; i++) {
+        let b = batches[i]
+        let to = b.range.to ?? end
+        if (end < to) {
+            batches[i] = {
+                ...b,
+                range: {from: b.range.from, to: end}
+            }
+            while (batches.length > i + 1) {
+                batches.pop()
+            }
+            return
         }
     }
 }
