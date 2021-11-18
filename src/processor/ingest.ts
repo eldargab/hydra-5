@@ -1,8 +1,9 @@
 import assert from "assert"
-import {Channel} from "../util/async"
+import {AbortHandle, Channel, wait} from "../util/async"
 import {indexerRequest} from "../util/indexer"
 import {Output} from "../util/out"
 import {Range} from "../util/range"
+import {def} from "../util/util"
 import {Batch, createBatches} from "./batch"
 import {Hooks} from "./interfaces/hooks"
 import {SubstrateBlock, SubstrateEvent} from "./interfaces/substrate"
@@ -27,7 +28,7 @@ export interface IndexerStatus {
 
 export interface IngestOptions {
     indexer: string
-    indexerPullTimeoutMS?: number
+    indexerPollIntervalMS?: number
     range: Range
     batchSize: number
     hooks: Hooks
@@ -35,8 +36,8 @@ export interface IngestOptions {
 
 
 export class Ingest {
-    private out = new Channel<DataBatch>(2)
-    private aborted = false
+    private out = new Channel<DataBatch | null>(2)
+    private _abort = new AbortHandle()
     private indexerHeight = -1
     private readonly limit: number
 
@@ -45,14 +46,30 @@ export class Ingest {
         assert(this.limit > 0)
     }
 
-    nextBatch(): Promise<DataBatch> {
+    nextBatch(): Promise<DataBatch | null> {
         return this.out.take()
+    }
+
+    abort(): void {
+        this._abort.abort()
+    }
+
+    @def
+    async run(): Promise<Error | undefined> {
+        try {
+            await this.loop()
+        } catch (err: any) {
+            return err
+        } finally {
+            this.out.close(null)
+        }
     }
 
     private async loop(): Promise<void> {
         let batches = createBatches(this.options.hooks, this.options.range)
         let nextBatch = batches.shift()
-        while (nextBatch && !this.aborted) {
+        while (nextBatch) {
+            this._abort.assertNotAborted()
             let batch = nextBatch
             let indexerHeight = await this.waitIndexerForHeight(batch.range.from)
             let blocks = await this.batchFetch(batch, indexerHeight)
@@ -69,12 +86,12 @@ export class Ingest {
                 nextBatch = batches.shift()
             }
 
-            await this.out.put({
+            await this._abort.guard(this.out.put({
                 blocks,
                 pre: batch.pre,
                 post: batch.post,
                 events: batch.events
-            })
+            }))
         }
     }
 
@@ -174,9 +191,7 @@ export class Ingest {
             if (this.indexerHeight >= minimumHeight) {
                 return this.indexerHeight
             } else {
-                await new Promise(resolve => {
-                    setTimeout(resolve, this.options.indexerPullTimeoutMS || 5000)
-                })
+                await wait(this.options.indexerPollIntervalMS || 5000, this._abort)
             }
         }
         return this.indexerHeight
