@@ -142,11 +142,6 @@ export interface SubstrateExtrinsic {
     versionInfo?: string
 
     /**
-     * Raw JSON with extrinsic metadata information
-     */
-    meta?: unknown
-
-    /**
      * Raw JSON with extrinsic era
      */
     era?: unknown
@@ -157,14 +152,14 @@ export interface SubstrateExtrinsic {
     signer: string
 
     /**
-     * An array of raw JSON with extrinsic arguments
-     */
-    args: ExtrinsicArg[]
-
-    /**
      * Hex string with the signature
      */
     signature?: string
+
+    /**
+     * An array of raw JSON with extrinsic arguments
+     */
+    args: ExtrinsicArg[]
 
     /**
      * Hex string of the extrinsic hash

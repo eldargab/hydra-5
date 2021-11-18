@@ -7,7 +7,8 @@ export async function indexerRequest<T=any>(indexerUrl: string, query: string): 
         body: JSON.stringify({query}),
         headers: {
             'content-type': 'application/json',
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'accept-encoding': 'gzip, br'
         }
     })
     if (!response.ok) {
