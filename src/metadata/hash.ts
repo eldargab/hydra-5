@@ -197,7 +197,7 @@ export class TypeHasher {
             return {variant: desc}
         }
         if (def.isHistoricMetaCompat) {
-            return {historic: def.asHistoricMetaCompat.toString()}
+                return {historic: def.asHistoricMetaCompat.toString()}
         }
         throw new Error(`Unsupported type: ${def.toString()}`)
     }
