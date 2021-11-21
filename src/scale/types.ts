@@ -20,49 +20,62 @@ export enum TypeKind {
     Array,
     Tuple,
     Composite,
-    Variant
+    Variant,
+    Option,
+    /**
+     * Option<bool>
+     */
+    BooleanOption,
+    /**
+     * Vec<u8>
+     */
+    Bytes,
+    /**
+     * [u8; 10]
+     */
+    BytesArray
 }
 
 
-export interface PrimitiveDef {
+export interface PrimitiveType {
     __kind: TypeKind.Primitive
     primitive: Primitive
 }
 
 
-export interface CompactDef {
+export interface CompactType {
     __kind: TypeKind.Compact
     type: Ti
 }
 
 
-export interface SequenceDef {
+export interface SequenceType {
     __kind: TypeKind.Sequence
     type: Ti
 }
 
 
-export interface BitSequenceDef {
+export interface BitSequenceType {
     __kind: TypeKind.BitSequence
     bitStoreType: Ti
     bitOrderType: Ti
 }
 
 
-export interface ArrayDef {
+export interface ArrayType {
     __kind: TypeKind.Array
     len: number
     type: Ti
 }
 
 
-export interface TupleDef {
+export interface TupleType {
     __kind: TypeKind.Tuple
     tuple: Ti[]
 }
 
 
-export interface CompositeDef {
+export interface CompositeType {
     __kind: TypeKind.Composite
     fields: Field[]
 }
@@ -74,10 +87,9 @@ export interface Field {
 }
 
 
-export interface VariantDef {
+export interface VariantType {
     __kind: TypeKind.Variant
-    __index?: (Variant | undefined)[]
-    variants: Variant[]
+    variants: (Variant | undefined)[]
 }
 
 
@@ -88,19 +100,38 @@ export interface Variant {
 }
 
 
-export type TypeDef =
-    PrimitiveDef |
-    CompactDef |
-    SequenceDef |
-    BitSequenceDef |
-    ArrayDef |
-    TupleDef |
-    CompositeDef |
-    VariantDef
-
-
-export interface Type {
-    path: string[]
-    def: TypeDef
-    docs: string[]
+export interface OptionType {
+    __kind: TypeKind.Option
+    type: Ti
 }
+
+
+export interface BooleanOptionType {
+    __kind: TypeKind.BooleanOption
+}
+
+
+export interface BytesType {
+    __kind: TypeKind.Bytes
+}
+
+
+export interface BytesArrayType {
+    __kind: TypeKind.BytesArray
+    len: number
+}
+
+
+export type Type =
+    PrimitiveType |
+    CompactType |
+    SequenceType |
+    BitSequenceType |
+    ArrayType |
+    TupleType |
+    CompositeType |
+    VariantType |
+    OptionType |
+    BooleanOptionType |
+    BytesType |
+    BytesArrayType

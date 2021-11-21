@@ -2,11 +2,21 @@ import assert from "assert"
 import {getCamelCase} from "../util/naming"
 import {assertNotNull, unexpectedCase} from "../util/util"
 import {Src} from "./src"
-import type {ArrayDef, Field, SequenceDef, Ti, TupleDef, TypeDef, VariantDef} from "./types"
+import type {
+    ArrayType,
+    BytesArrayType,
+    Field,
+    OptionType,
+    SequenceType,
+    Ti,
+    TupleType,
+    Type,
+    VariantType
+} from "./types"
 import {Primitive, TypeKind} from "./types"
 
 
-export function decodeBinary(types: TypeDef[], type: Ti, data: Uint8Array): any {
+export function decodeBinary(types: Type[], type: Ti, data: Uint8Array): any {
     let src = new Src(data)
     let val = decode(types, type, src)
     assert(!src.hasBytes())
@@ -14,7 +24,7 @@ export function decodeBinary(types: TypeDef[], type: Ti, data: Uint8Array): any 
 }
 
 
-export function decode(types: TypeDef[], type: Ti, src: Src): any {
+export function decode(types: Type[], type: Ti, src: Src): any {
     let def = types[type]
     switch(def.__kind) {
         case TypeKind.Primitive:
@@ -33,13 +43,23 @@ export function decode(types: TypeDef[], type: Ti, src: Src): any {
             return decodeComposite(types, def, src)
         case TypeKind.Variant:
             return decodeVariant(types, def, src)
+        case TypeKind.Option:
+            return decodeOption(types, def, src)
+        case TypeKind.BooleanOption:
+            return decodeBooleanOption(src)
+        case TypeKind.Bytes:
+            return decodeBytes(src)
+        case TypeKind.BytesArray:
+            return decodeBytesArray(def, src)
+        default:
+            throw unexpectedCase((def as any).__kind)
     }
 }
 
 
-export function decodeVariant(types: TypeDef[], def: VariantDef, src: Src): any {
+export function decodeVariant(types: Type[], def: VariantType, src: Src): any {
     let idx = src.u8()
-    let variant = assertNotNull(def.__index)[idx]
+    let variant = def.variants[idx]
     if (variant == null) {
         throw new Error('Unexpected variant index')
     }
@@ -60,7 +80,7 @@ export function decodeVariant(types: TypeDef[], def: VariantDef, src: Src): any 
 }
 
 
-export function decodeComposite(types: TypeDef[], def: {fields: Field[]}, src: Src): any {
+export function decodeComposite(types: Type[], def: {fields: Field[]}, src: Src): any {
     if (def.fields.length == 0) return null
     if (def.fields[0].name == null) return decodeCompositeTuple(types, def.fields, src)
     let result: any = {}
@@ -73,7 +93,7 @@ export function decodeComposite(types: TypeDef[], def: {fields: Field[]}, src: S
 }
 
 
-function decodeCompositeTuple(types: TypeDef[], fields: Field[], src: Src): any {
+function decodeCompositeTuple(types: Type[], fields: Field[], src: Src): any {
     switch(fields.length) {
         case 0:
             return null
@@ -92,7 +112,7 @@ function decodeCompositeTuple(types: TypeDef[], fields: Field[], src: Src): any 
 }
 
 
-export function decodeTuple(types: TypeDef[], def: TupleDef, src: Src): any {
+export function decodeTuple(types: Type[], def: TupleType, src: Src): any {
     switch(def.tuple.length) {
         case 0:
             return null
@@ -108,7 +128,13 @@ export function decodeTuple(types: TypeDef[], def: TupleDef, src: Src): any {
 }
 
 
-export function decodeSequence(types: TypeDef[], def: SequenceDef, src: Src): any[] {
+export function decodeBytes(src: Src): Uint8Array {
+    let len = src.compactLength()
+    return src.bytes(len).slice(0)
+}
+
+
+export function decodeSequence(types: Type[], def: SequenceType, src: Src): any[] {
     let len = src.compactLength()
     let result: any[] = new Array(len)
     for (let i = 0; i < len; i++) {
@@ -118,7 +144,7 @@ export function decodeSequence(types: TypeDef[], def: SequenceDef, src: Src): an
 }
 
 
-export function decodeArray(types: TypeDef[], def: ArrayDef, src: Src): any[] {
+export function decodeArray(types: Type[], def: ArrayType, src: Src): any[] {
     let {len, type} = def
     let result: any[] = new Array(len)
     for (let i = 0; i < len; i++) {
@@ -131,6 +157,39 @@ export function decodeArray(types: TypeDef[], def: ArrayDef, src: Src): any[] {
 export function decodeBitSequence(src: Src): Uint8Array {
     let len = Math.ceil(src.compactLength() / 8)
     return src.bytes(len).slice(0)
+}
+
+
+export function decodeBytesArray(def: BytesArrayType, src: Src): Uint8Array {
+    return src.bytes(def.len).slice(0)
+}
+
+
+export function decodeOption(types: Type[], def: OptionType, src: Src): null | any {
+    let byte = src.u8()
+    switch(byte) {
+        case 0:
+            return null
+        case 1:
+            return decode(types, def.type, src)
+        default:
+            throw unexpectedCase(byte.toString())
+    }
+}
+
+
+export function decodeBooleanOption(src: Src): boolean | null {
+    let byte = src.u8()
+    switch(byte) {
+        case 0:
+            return null
+        case 1:
+            return true
+        case 2:
+            return false
+        default:
+            throw unexpectedCase(byte.toString())
+    }
 }
 
 
