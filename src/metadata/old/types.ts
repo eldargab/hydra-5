@@ -1,4 +1,4 @@
-import {Field, Primitive, Ti, Type as ScaleType, TypeKind, Variant} from "../../scale/types"
+import {Codec as ScaleCodec, Field, Primitive, Ti, Type as ScaleType, TypeKind, Variant} from "../../scale"
 import {unexpectedCase} from "../../util/util"
 import {ArrayType, NamedType, printType, TupleType, Type, TypeExpParser} from "./typeExp"
 
@@ -31,17 +31,21 @@ export interface OldTypes {
 
 
 export class OldTypeRegistry {
-    public readonly scaleTypes: ScaleType[] = []
+    private scaleTypes: ScaleType[] = []
     private lookup = new Map<OldTypeExp, Ti>()
 
     constructor(private types: OldTypes) {}
+
+    getScaleCodec(): ScaleCodec {
+        return new ScaleCodec(this.scaleTypes)
+    }
 
     use(typeExp: OldTypeExp | Type): Ti {
         let type = typeof typeExp == 'string' ? TypeExpParser.parse(typeExp) : typeExp
         let key = printType(type)
         let ti = this.lookup.get(key)
         if (ti == null) {
-            ti = this.scaleTypes.push({__kind: TypeKind.DoNotConstruct}) - 1
+            ti = this.scaleTypes.push({kind: TypeKind.DoNotConstruct}) - 1
             this.lookup.set(key, ti)
             let t = this.buildScaleType(type)
             if (typeof t == 'number') {
@@ -71,19 +75,19 @@ export class OldTypeRegistry {
         if (primitive) {
             assertNoParams(type)
             return {
-                __kind: TypeKind.Primitive,
+                kind: TypeKind.Primitive,
                 primitive
             }
         }
         switch(type.name) {
             case 'DoNotConstruct':
                 return {
-                    __kind: TypeKind.DoNotConstruct
+                    kind: TypeKind.DoNotConstruct
                 }
             case 'Vec': {
                 let param = this.use(assertOneParam(type))
                 return {
-                    __kind: TypeKind.Sequence,
+                    kind: TypeKind.Sequence,
                     type: param
                 }
             }
@@ -94,7 +98,7 @@ export class OldTypeRegistry {
             case 'Option': {
                 let param = this.use(assertOneParam(type))
                 return {
-                    __kind: TypeKind.Option,
+                    kind: TypeKind.Option,
                     type: param
                 }
             }
@@ -105,7 +109,7 @@ export class OldTypeRegistry {
                     throw new Error(`Only primitive unsigned numbers can be compact`)
                 }
                 return {
-                    __kind: TypeKind.Compact,
+                    kind: TypeKind.Compact,
                     type: this.use(param)
                 }
             }
@@ -164,7 +168,7 @@ export class OldTypeRegistry {
             }
         }
         return {
-            __kind: TypeKind.Variant,
+            kind: TypeKind.Variant,
             variants
         }
     }
@@ -178,14 +182,14 @@ export class OldTypeRegistry {
             })
         }
         return {
-            __kind: TypeKind.Composite,
+            kind: TypeKind.Composite,
             fields
         }
     }
 
     private buildArray(type: ArrayType): ScaleType {
         return {
-            __kind: TypeKind.Array,
+            kind: TypeKind.Array,
             type: this.use(type.item),
             len: type.len
         }
@@ -193,7 +197,7 @@ export class OldTypeRegistry {
 
     private buildTuple(type: TupleType): ScaleType {
         return {
-            __kind: TypeKind.Tuple,
+            kind: TypeKind.Tuple,
             tuple: type.params.map(p => this.use(p))
         }
     }

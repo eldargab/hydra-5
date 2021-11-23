@@ -7,29 +7,18 @@ import type {
     BytesArrayType,
     Field,
     OptionType,
+    Registry,
     SequenceType,
     Ti,
     TupleType,
-    Type,
     VariantType
 } from "./types"
 import {Primitive, TypeKind} from "./types"
 
 
-export function decodeBinary(types: Type[], type: Ti, data: Uint8Array | string): any {
-    if (typeof data == 'string') {
-        data = Buffer.from(data.slice(2), 'hex')
-    }
-    let src = new Src(data)
-    let val = decode(types, type, src)
-    assert(!src.hasBytes())
-    return val
-}
-
-
-export function decode(types: Type[], type: Ti, src: Src): any {
-    let def = types[type]
-    switch(def.__kind) {
+export function decode(registry: Registry, type: Ti, src: Src): any {
+    let def = registry[type]
+    switch(def.kind) {
         case TypeKind.Primitive:
             return decodePrimitive(def.primitive, src)
         case TypeKind.Compact:
@@ -37,17 +26,17 @@ export function decode(types: Type[], type: Ti, src: Src): any {
         case TypeKind.BitSequence:
             return decodeBitSequence(src)
         case TypeKind.Array:
-            return decodeArray(types, def, src)
+            return decodeArray(registry, def, src)
         case TypeKind.Sequence:
-            return decodeSequence(types, def, src)
+            return decodeSequence(registry, def, src)
         case TypeKind.Tuple:
-            return decodeTuple(types, def, src)
+            return decodeTuple(registry, def, src)
         case TypeKind.Composite:
-            return decodeComposite(types, def, src)
+            return decodeComposite(registry, def, src)
         case TypeKind.Variant:
-            return decodeVariant(types, def, src)
+            return decodeVariant(registry, def, src)
         case TypeKind.Option:
-            return decodeOption(types, def, src)
+            return decodeOption(registry, def, src)
         case TypeKind.BooleanOption:
             return decodeBooleanOption(src)
         case TypeKind.Bytes:
@@ -62,7 +51,7 @@ export function decode(types: Type[], type: Ti, src: Src): any {
 }
 
 
-export function decodeVariant(types: Type[], def: VariantType, src: Src): any {
+function decodeVariant(registry: Registry, def: VariantType, src: Src): any {
     let idx = src.u8()
     let variant = def.variants[idx]
     if (variant == null) {
@@ -76,107 +65,107 @@ export function decodeVariant(types: Type[], def: VariantType, src: Src): any {
     if (variant.fields[0].name == null) {
         return {
             __kind: variant.name,
-            [variant.name]: decodeCompositeTuple(types, variant.fields, src)
+            [variant.name]: decodeCompositeTuple(registry, variant.fields, src)
         }
     }
-    let value = decodeComposite(types, variant, src)
+    let value = decodeComposite(registry, variant, src)
     value.__kind = variant.name
     return value
 }
 
 
-export function decodeComposite(types: Type[], def: {fields: Field[]}, src: Src): any {
+function decodeComposite(registry: Registry, def: {fields: Field[]}, src: Src): any {
     if (def.fields.length == 0) return null
-    if (def.fields[0].name == null) return decodeCompositeTuple(types, def.fields, src)
+    if (def.fields[0].name == null) return decodeCompositeTuple(registry, def.fields, src)
     let result: any = {}
     for (let i = 0; i < def.fields.length; i++) {
         let f = def.fields[i]
         let key = getCamelCase(assertNotNull(f.name))
-        result[key] = decode(types, f.type, src)
+        result[key] = decode(registry, f.type, src)
     }
     return result
 }
 
 
-function decodeCompositeTuple(types: Type[], fields: Field[], src: Src): any {
+function decodeCompositeTuple(registry: Registry, fields: Field[], src: Src): any {
     switch(fields.length) {
         case 0:
             return null
         case 1:
             assert(fields[0].name == null)
-            return decode(types, fields[0].type, src)
+            return decode(registry, fields[0].type, src)
         default:
             let result: any = new Array(fields.length)
             for (let i = 0; i < fields.length; i++) {
                 let f = fields[i]
                 assert(f.name == null)
-                result[i] = decode(types, f.type, src)
+                result[i] = decode(registry, f.type, src)
             }
             return result
     }
 }
 
 
-export function decodeTuple(types: Type[], def: TupleType, src: Src): any {
+function decodeTuple(registry: Registry, def: TupleType, src: Src): any {
     switch(def.tuple.length) {
         case 0:
             return null
         case 1:
-            return decode(types, def.tuple[0], src)
+            return decode(registry, def.tuple[0], src)
         default:
             let result: any[] = new Array(def.tuple.length)
             for (let i = 0; i < def.tuple.length; i++) {
-                result[i] = decode(types, def.tuple[i], src)
+                result[i] = decode(registry, def.tuple[i], src)
             }
             return result
     }
 }
 
 
-export function decodeBytes(src: Src): Uint8Array {
+function decodeBytes(src: Src): Uint8Array {
     let len = src.compactLength()
-    return src.bytes(len).slice(0)
+    return src.bytes(len)
 }
 
 
-export function decodeSequence(types: Type[], def: SequenceType, src: Src): any[] {
+function decodeSequence(registry: Registry, def: SequenceType, src: Src): any[] {
     let len = src.compactLength()
     let result: any[] = new Array(len)
     for (let i = 0; i < len; i++) {
-        result[i] = decode(types, def.type, src)
+        result[i] = decode(registry, def.type, src)
     }
     return result
 }
 
 
-export function decodeArray(types: Type[], def: ArrayType, src: Src): any[] {
+function decodeArray(registry: Registry, def: ArrayType, src: Src): any[] {
     let {len, type} = def
     let result: any[] = new Array(len)
     for (let i = 0; i < len; i++) {
-        result[i] = decode(types, type, src)
+        result[i] = decode(registry, type, src)
     }
     return result
 }
 
 
-export function decodeBitSequence(src: Src): Uint8Array {
+function decodeBitSequence(src: Src): Uint8Array {
     let len = Math.ceil(src.compactLength() / 8)
-    return src.bytes(len).slice(0)
+    return src.bytes(len)
 }
 
 
-export function decodeBytesArray(def: BytesArrayType, src: Src): Uint8Array {
-    return src.bytes(def.len).slice(0)
+function decodeBytesArray(def: BytesArrayType, src: Src): Uint8Array {
+    return src.bytes(def.len)
 }
 
 
-export function decodeOption(types: Type[], def: OptionType, src: Src): null | any {
+export function decodeOption(registry: Registry, def: OptionType, src: Src): null | any {
     let byte = src.u8()
     switch(byte) {
         case 0:
             return null
         case 1:
-            return decode(types, def.type, src)
+            return decode(registry, def.type, src)
         default:
             throw unexpectedCase(byte.toString())
     }

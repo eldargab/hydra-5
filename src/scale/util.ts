@@ -1,4 +1,37 @@
-import {Ti, Type, TypeKind, Variant} from "./types"
+import {Primitive, Registry, Ti, Type, TypeKind, Variant} from "./types"
+
+
+export function toRegistry(types: Type[]): Registry {
+    function isPrimitive(primitive: Primitive, ti: Ti): boolean {
+        let type = types[ti]
+        return type.kind == TypeKind.Primitive && type.primitive == primitive
+    }
+
+    return types.map(type => {
+        switch(type.kind) {
+            case TypeKind.Sequence:
+                if (isPrimitive('U8', type.type)) {
+                    return {kind: TypeKind.Bytes}
+                } else {
+                    return {...type, checked: true}
+                }
+            case TypeKind.Array:
+                if (isPrimitive('U8', type.type)) {
+                    return {kind: TypeKind.BytesArray, len: type.len}
+                } else {
+                    return {...type, checked: true}
+                }
+            case TypeKind.Option:
+                if (isPrimitive('Bool', type.type)) {
+                    return {kind: TypeKind.BooleanOption}
+                } else {
+                    return {...type, checked: true}
+                }
+            default:
+                return type
+        }
+    })
+}
 
 
 export function getTypesFromMetadata(json: any): Type[] {
@@ -20,52 +53,52 @@ export function getTypesFromMetadata(json: any): Type[] {
         let def: Type
         if (jd.primitive) {
             def = {
-                __kind: TypeKind.Primitive,
+                kind: TypeKind.Primitive,
                 primitive: jd.primitive
             }
         } else if (jd.compact) {
             def = {
-                __kind: TypeKind.Compact,
+                kind: TypeKind.Compact,
                 type: jd.compact.type
             }
         } else if (jd.sequence) {
             if (isU8(jd.sequence.type)) {
                 def = {
-                    __kind: TypeKind.Bytes
+                    kind: TypeKind.Bytes
                 }
             } else {
                 def = {
-                    __kind: TypeKind.Sequence,
+                    kind: TypeKind.Sequence,
                     type: jd.sequence.type
                 }
             }
         } else if (jd.bitSequence) {
             def = {
-                __kind: TypeKind.BitSequence,
+                kind: TypeKind.BitSequence,
                 bitStoreType: jd.bitSequence.bitStoreType,
                 bitOrderType: jd.bitSequence.bitOrderType
             }
         } else if (jd.array) {
             if (isU8(jd.array.type)) {
                 def = {
-                    __kind: TypeKind.BytesArray,
+                    kind: TypeKind.BytesArray,
                     len: jd.array.len
                 }
             } else {
                 def = {
-                    __kind: TypeKind.Array,
+                    kind: TypeKind.Array,
                     len: jd.array.len,
                     type: jd.array.type
                 }
             }
         } else if (jd.tuple) {
             def = {
-                __kind: TypeKind.Tuple,
+                kind: TypeKind.Tuple,
                 tuple: jd.tuple.slice()
             }
         } else if (jd.composite) {
             def = {
-                __kind: TypeKind.Composite,
+                kind: TypeKind.Composite,
                 fields: jd.composite.fields.slice()
             }
         } else if (jd.variant) {
@@ -77,7 +110,7 @@ export function getTypesFromMetadata(json: any): Type[] {
                 index[v.index] = v
             }
             def = {
-                __kind: TypeKind.Variant,
+                kind: TypeKind.Variant,
                 variants: index
             }
             let isOption =
@@ -90,11 +123,11 @@ export function getTypesFromMetadata(json: any): Type[] {
                 let optionType = variants[1].fields[0].type
                 if (isPrimitive('Bool', optionType)) {
                     def = {
-                        __kind: TypeKind.BooleanOption
+                        kind: TypeKind.BooleanOption
                     }
                 } else {
                     def = {
-                        __kind: TypeKind.Option,
+                        kind: TypeKind.Option,
                         type: optionType
                     }
                 }

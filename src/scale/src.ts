@@ -150,6 +150,12 @@ export class Src {
     hasBytes(): boolean {
         return this.buf.length > this.idx
     }
+
+    assertEOF(): void {
+        if (this.hasBytes()) {
+            throw new Error('Unprocessed data left')
+        }
+    }
 }
 
 

@@ -39,45 +39,45 @@ export enum TypeKind {
 
 
 export interface PrimitiveType {
-    __kind: TypeKind.Primitive
+    kind: TypeKind.Primitive
     primitive: Primitive
 }
 
 
 export interface CompactType {
-    __kind: TypeKind.Compact
+    kind: TypeKind.Compact
     type: Ti
 }
 
 
 export interface SequenceType {
-    __kind: TypeKind.Sequence
+    kind: TypeKind.Sequence
     type: Ti
 }
 
 
 export interface BitSequenceType {
-    __kind: TypeKind.BitSequence
+    kind: TypeKind.BitSequence
     bitStoreType: Ti
     bitOrderType: Ti
 }
 
 
 export interface ArrayType {
-    __kind: TypeKind.Array
+    kind: TypeKind.Array
     len: number
     type: Ti
 }
 
 
 export interface TupleType {
-    __kind: TypeKind.Tuple
+    kind: TypeKind.Tuple
     tuple: Ti[]
 }
 
 
 export interface CompositeType {
-    __kind: TypeKind.Composite
+    kind: TypeKind.Composite
     fields: Field[]
 }
 
@@ -89,7 +89,7 @@ export interface Field {
 
 
 export interface VariantType {
-    __kind: TypeKind.Variant
+    kind: TypeKind.Variant
     variants: (Variant | undefined)[]
 }
 
@@ -102,29 +102,29 @@ export interface Variant {
 
 
 export interface OptionType {
-    __kind: TypeKind.Option
+    kind: TypeKind.Option
     type: Ti
 }
 
 
 export interface BooleanOptionType {
-    __kind: TypeKind.BooleanOption
+    kind: TypeKind.BooleanOption
 }
 
 
 export interface BytesType {
-    __kind: TypeKind.Bytes
+    kind: TypeKind.Bytes
 }
 
 
 export interface BytesArrayType {
-    __kind: TypeKind.BytesArray
+    kind: TypeKind.BytesArray
     len: number
 }
 
 
 export interface DoNotConstructType {
-    __kind: TypeKind.DoNotConstruct
+    kind: TypeKind.DoNotConstruct
 }
 
 
@@ -142,3 +142,37 @@ export type Type =
     BytesType |
     BytesArrayType |
     DoNotConstructType
+
+
+interface CheckedOptionType extends OptionType {
+    checked: true
+}
+
+
+interface CheckedSequenceType extends SequenceType {
+    checked: true
+}
+
+
+interface CheckedArrayType extends ArrayType {
+    checked: true
+}
+
+
+type CheckedType =
+    PrimitiveType |
+    CompactType |
+    CheckedSequenceType |
+    BitSequenceType |
+    CheckedArrayType |
+    TupleType |
+    CompositeType |
+    VariantType |
+    CheckedOptionType |
+    BooleanOptionType |
+    BytesType |
+    BytesArrayType |
+    DoNotConstructType
+
+
+export type Registry = CheckedType[]

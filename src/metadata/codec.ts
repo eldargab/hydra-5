@@ -1,12 +1,10 @@
 import assert from "assert"
-import {decode} from "../scale/decode"
-import {Src} from "../scale/src"
-import type {Ti, Type} from "../scale/types"
+import {Codec, Src, Ti} from "../scale"
 import * as metadataDefinition from "./definition"
 import {OldTypeRegistry} from "./old/types"
 
 
-const SCALE = createScaleType()
+const {codec, type} = createScaleCodec()
 
 
 export function decodeMetadata(data: string | Uint8Array): any {
@@ -16,15 +14,17 @@ export function decodeMetadata(data: string | Uint8Array): any {
     let src = new Src(data)
     let magic = src.u32()
     assert(magic === 0x6174656d, 'No magic number 0x6174656d at the start of data')
-    return decode(SCALE.types, SCALE.ti, src)
+    let metadata = codec.decode(type, src)
+    src.assertEOF()
+    return metadata
 }
 
 
-function createScaleType(): {types: Type[], ti: Ti} {
+function createScaleCodec(): {codec: Codec, type: Ti} {
     let registry = new OldTypeRegistry(metadataDefinition)
-    let ti = registry.use('Metadata')
+    let type = registry.use('Metadata')
     return {
-        types: registry.scaleTypes,
-        ti
+        codec: registry.getScaleCodec(),
+        type
     }
 }
