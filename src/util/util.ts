@@ -76,6 +76,6 @@ export function def(proto: any, prop: string, d: PropertyDescriptor): PropertyDe
 }
 
 
-export function unexpectedCase(val?: string): Error {
+export function unexpectedCase(val?: unknown): Error {
     return new Error(val ? `Unexpected case: ${val}` : `Unexpected case`)
 }

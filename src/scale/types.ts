@@ -33,7 +33,8 @@ export enum TypeKind {
     /**
      * [u8; 10]
      */
-    BytesArray
+    BytesArray,
+    DoNotConstruct
 }
 
 
@@ -122,6 +123,11 @@ export interface BytesArrayType {
 }
 
 
+export interface DoNotConstructType {
+    __kind: TypeKind.DoNotConstruct
+}
+
+
 export type Type =
     PrimitiveType |
     CompactType |
@@ -134,4 +140,5 @@ export type Type =
     OptionType |
     BooleanOptionType |
     BytesType |
-    BytesArrayType
+    BytesArrayType |
+    DoNotConstructType
