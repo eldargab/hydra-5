@@ -1,4 +1,4 @@
-import {SpecCache} from "../metadata/cache"
+import {SpecCache} from "../metadata-old/cache"
 import {Typegen} from "../typegen/gen"
 import {OutDir} from "../util/out"
 

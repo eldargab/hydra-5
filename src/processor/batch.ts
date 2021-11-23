@@ -1,11 +1,9 @@
-import assert from "assert"
-import {QualifiedName} from "../metadata/base"
+import {QualifiedName} from "../metadata-old/base"
 import {Heap} from "../util/heap"
-import {isWithinRange, Range, rangeDifference, rangeIntersection} from "../util/range"
+import {Range, rangeDifference, rangeIntersection} from "../util/range"
 import {assertNotNull} from "../util/util"
 import {BlockHandler, EventHandler} from "./interfaces/handlerContext"
 import {Hooks} from "./interfaces/hooks"
-
 
 
 export interface Batch {

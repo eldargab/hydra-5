@@ -2,9 +2,9 @@ import type {Text, Vec} from "@polkadot/types"
 import type {MetadataLatest, SiField, SiLookupTypeId, SiType} from "@polkadot/types/interfaces"
 import {stringCamelCase} from "@polkadot/util"
 import assert from "assert"
-import {getTypeHash} from "../metadata/hash"
+import {getTypeHash} from "../metadata-old/hash"
 import {Imports, isReservedTypeName, POLKADOT_LIB} from "./imports"
-import {forEachType, getTypesCount, Ti} from "../metadata/base"
+import {forEachType, getTypesCount, Ti} from "../metadata-old/base"
 import type {FileOutput, Output} from "../util/out"
 
 

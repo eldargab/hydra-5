@@ -1,5 +1,5 @@
-import {getTypeHash} from "../metadata/hash"
-import {Spec, Ti} from "../metadata/base"
+import {getTypeHash} from "../metadata-old/hash"
+import {Spec, Ti} from "../metadata-old/base"
 import {arrayEquals} from "../util/util"
 
 

@@ -3,58 +3,49 @@ import {unexpectedCase} from "../../util/util"
 import {ArrayType, NamedType, printType, TupleType, Type, TypeExpParser} from "./typeExp"
 
 
-export type TypeExp = string
+export type OldTypeDefinition = OldTypeExp | OldEnumDefinition | OldStructDefinition
 
 
-export interface EnumDefinition {
-    _enum: string[] | Record<string, TypeExp | null>
-    _struct?: undefined
+export type OldTypeExp = string
+
+
+export interface OldStructDefinition extends Record<string, OldTypeExp> {}
+
+
+export interface OldEnumDefinition {
+    _enum: string[] | Record<string, OldTypeExp | OldStructDefinition | null>
 }
 
 
-export interface StructDefinition {
-    _struct: Record<string, TypeExp>
-    _enum?: undefined
-}
-
-
-export type TypeDefinition = TypeExp | EnumDefinition | StructDefinition
-
-
-export interface TypesAlias {
+export interface OldTypesAlias {
     [pallet: string]: {
-        [name: string]: TypeExp
+        [name: string]: OldTypeExp
     }
 }
 
 
-export interface Types {
-    types: Record<string, TypeDefinition>
-    typesAlias?: TypesAlias
+export interface OldTypes {
+    types: Record<string, OldTypeDefinition>
+    typesAlias?: OldTypesAlias
 }
 
 
-export class TypeRegistry {
+export class OldTypeRegistry {
     public readonly scaleTypes: ScaleType[] = []
-    private lookup = new Map<TypeExp, Ti>()
+    private lookup = new Map<OldTypeExp, Ti>()
 
-    constructor(private types: Types) {}
+    constructor(private types: OldTypes) {}
 
-    use(typeExp: TypeExp | Type): Ti {
+    use(typeExp: OldTypeExp | Type): Ti {
         let type = typeof typeExp == 'string' ? TypeExpParser.parse(typeExp) : typeExp
         let key = printType(type)
         let ti = this.lookup.get(key)
         if (ti == null) {
-            ti = this.scaleTypes.push({__kind: TypeKind.DoNotConstruct})
+            ti = this.scaleTypes.push({__kind: TypeKind.DoNotConstruct}) - 1
             this.lookup.set(key, ti)
             let t = this.buildScaleType(type)
             if (typeof t == 'number') {
-                if (t < ti) { // Means there are no references to `ti`
-                    ti = t
-                    this.scaleTypes.pop()
-                } else { // Here duplication is still possible, but there is no harm in it
-                    this.scaleTypes[ti] = this.scaleTypes[t]
-                }
+                this.scaleTypes[ti] = this.scaleTypes[t]
             } else {
                 this.scaleTypes[ti] = t
             }
@@ -85,12 +76,20 @@ export class TypeRegistry {
             }
         }
         switch(type.name) {
+            case 'DoNotConstruct':
+                return {
+                    __kind: TypeKind.DoNotConstruct
+                }
             case 'Vec': {
                 let param = this.use(assertOneParam(type))
                 return {
                     __kind: TypeKind.Sequence,
                     type: param
                 }
+            }
+            case 'Bytes': {
+                assertNoParams(type)
+                return this.use('Vec<u8>')
             }
             case 'Option': {
                 let param = this.use(assertOneParam(type))
@@ -113,11 +112,7 @@ export class TypeRegistry {
         }
         if (type.params.length > 0) {
             // Following polkadot.js we ignore all type parameters which we don't understand
-            // This will create duplicate entries, but that's not critical
-            return this.use({
-                ...type,
-                params: []
-            })
+            return this.use(type.name)
         }
         let def = this.types.types[type.name]
         if (def == null) {
@@ -125,14 +120,14 @@ export class TypeRegistry {
         }
         if (typeof def == 'string') {
             return this.use(def)
+        } else if (def._enum) {
+            return this.buildEnum(def as OldEnumDefinition)
+        } else {
+            return this.buildStruct(def as OldStructDefinition)
         }
-        if (def._enum) {
-            return this.buildEnum(def)
-        }
-        throw new Error()
     }
 
-    private buildEnum(def: EnumDefinition): ScaleType {
+    private buildEnum(def: OldEnumDefinition): ScaleType {
         let variants: Variant[] = []
         if (Array.isArray(def._enum)) {
             variants = def._enum.map((name, index) => {
@@ -147,10 +142,24 @@ export class TypeRegistry {
             for (let name in def._enum) {
                 let type = def._enum[name]
                 let fields: Field[] = []
-                if (type != null) {
-
+                if (typeof type == 'string') {
+                    fields.push({
+                        name: null,
+                        type: this.use(type)
+                    })
+                } else if (type != null) {
+                    for (let key in type) {
+                        fields.push({
+                            name: key,
+                            type: this.use(type[key])
+                        })
+                    }
                 }
-                variants.push({name, index, fields})
+                variants.push({
+                    name,
+                    index,
+                    fields
+                })
                 index += 1
             }
         }
@@ -160,12 +169,33 @@ export class TypeRegistry {
         }
     }
 
+    private buildStruct(def: OldStructDefinition): ScaleType {
+        let fields: Field[] = []
+        for (let name in def) {
+            fields.push({
+                name,
+                type: this.use(def[name])
+            })
+        }
+        return {
+            __kind: TypeKind.Composite,
+            fields
+        }
+    }
+
     private buildArray(type: ArrayType): ScaleType {
-        throw new Error()
+        return {
+            __kind: TypeKind.Array,
+            type: this.use(type.item),
+            len: type.len
+        }
     }
 
     private buildTuple(type: TupleType): ScaleType {
-        throw new Error()
+        return {
+            __kind: TypeKind.Tuple,
+            tuple: type.params.map(p => this.use(p))
+        }
     }
 }
 
@@ -214,6 +244,7 @@ function asPrimitive(name: string): Primitive | undefined {
         case 'bool':
             return 'Bool'
         case 'str':
+        case 'text':
             return 'Str'
         default:
             return undefined

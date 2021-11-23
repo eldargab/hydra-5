@@ -1,4 +1,4 @@
-import {Spec, SpecVersion, toQualifiedName} from "../metadata/base"
+import {Spec, SpecVersion, toQualifiedName} from "../metadata-old/base"
 import type {OutDir} from "../util/out"
 import {assertNotNull, def, groupBy} from "../util/util"
 import {Event, eventEquals} from "./event"

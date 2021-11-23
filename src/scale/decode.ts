@@ -16,7 +16,10 @@ import type {
 import {Primitive, TypeKind} from "./types"
 
 
-export function decodeBinary(types: Type[], type: Ti, data: Uint8Array): any {
+export function decodeBinary(types: Type[], type: Ti, data: Uint8Array | string): any {
+    if (typeof data == 'string') {
+        data = Buffer.from(data.slice(2), 'hex')
+    }
     let src = new Src(data)
     let val = decode(types, type, src)
     assert(!src.hasBytes())
@@ -51,6 +54,8 @@ export function decode(types: Type[], type: Ti, src: Src): any {
             return decodeBytes(src)
         case TypeKind.BytesArray:
             return decodeBytesArray(def, src)
+        case TypeKind.DoNotConstruct:
+            throw new Error('DoNotConstruct type reached')
         default:
             throw unexpectedCase((def as any).__kind)
     }
