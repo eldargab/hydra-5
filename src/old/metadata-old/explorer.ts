@@ -1,6 +1,6 @@
 import {ApiPromise} from "@polkadot/api"
 import assert from "assert"
-import {indexerRequest} from "../util/indexer"
+import {indexerRequest} from "../../util/indexer"
 import {Spec, SpecVersion} from "./base"
 import {SpecCache} from "./cache"
 

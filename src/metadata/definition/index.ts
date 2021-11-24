@@ -36,6 +36,5 @@ export const types: OldTypes['types'] = {
             V13: 'MetadataV13',
             V14: 'MetadataV14'
         }
-    },
-    MetadataLatest: 'MetadataV14'
+    }
 }

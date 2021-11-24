@@ -5,7 +5,7 @@ import assert from "assert"
 import {getTypeHash} from "../metadata-old/hash"
 import {Imports, isReservedTypeName, POLKADOT_LIB} from "./imports"
 import {forEachType, getTypesCount, Ti} from "../metadata-old/base"
-import type {FileOutput, Output} from "../util/out"
+import type {FileOutput, Output} from "../../util/out"
 
 
 export class Interfaces {

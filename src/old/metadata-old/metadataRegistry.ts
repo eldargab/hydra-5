@@ -1,7 +1,7 @@
 import type {ApiPromise} from "@polkadot/api"
 import type {Registry} from "@polkadot/types/types"
 import assert from "assert"
-import {sha256} from "../util/sha256"
+import {sha256} from "../../util/sha256"
 import {QualifiedName, SpecVersion, Ti, toQualifiedName} from "./base"
 import {TypeHasher} from "./hash"
 

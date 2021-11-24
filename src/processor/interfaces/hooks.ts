@@ -1,4 +1,4 @@
-import {QualifiedName} from "../../metadata-old/base"
+import {QualifiedName} from "../../old/metadata-old/base"
 import {Range} from "../../util/range"
 import {BlockHandler, EventHandler} from "./handlerContext"
 

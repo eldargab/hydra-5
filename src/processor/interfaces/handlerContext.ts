@@ -1,5 +1,5 @@
 import type {EntityManager} from "typeorm"
-import type {MetadataRegistry} from "../../metadata-old/metadataRegistry"
+import type {MetadataRegistry} from "../../old/metadata-old/metadataRegistry"
 import type {SubstrateBlock, SubstrateEvent} from "./substrate"
 
 

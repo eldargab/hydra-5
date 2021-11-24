@@ -1,5 +1,5 @@
 import * as fs from "fs"
-import {SpecCache} from "../metadata-old/cache"
+import {SpecCache} from "../old/metadata-old/cache"
 
 
 async function main(): Promise<void> {

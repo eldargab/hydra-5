@@ -1,6 +1,6 @@
 import {MetadataLatest} from "@polkadot/types/interfaces"
 import assert from "assert"
-import {sha256} from "../util/sha256"
+import {sha256} from "../../util/sha256"
 import {getTypesCount, Ti} from "./base"
 
 

@@ -1,6 +1,6 @@
 import {Metadata, TypeRegistry} from "@polkadot/types"
 import type {MetadataLatest, SiType} from "@polkadot/types/interfaces"
-import {lowerCaseFirst} from "../util/util"
+import {lowerCaseFirst} from "../../util/util"
 
 
 export type SpecVersion = number

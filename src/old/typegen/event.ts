@@ -1,6 +1,6 @@
 import {getTypeHash} from "../metadata-old/hash"
 import {Spec, Ti} from "../metadata-old/base"
-import {arrayEquals} from "../util/util"
+import {arrayEquals} from "../../util/util"
 
 
 export interface Event {

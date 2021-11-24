@@ -1,5 +1,5 @@
-import {SpecCache} from "../metadata-old/cache"
-import {Typegen} from "../typegen/gen"
+import {SpecCache} from "../old/metadata-old/cache"
+import {Typegen} from "../old/typegen/gen"
 import {OutDir} from "../util/out"
 
 

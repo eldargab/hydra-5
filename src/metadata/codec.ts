@@ -24,7 +24,7 @@ function createScaleCodec(): {codec: Codec, type: Ti} {
     let registry = new OldTypeRegistry(metadataDefinition)
     let type = registry.use('Metadata')
     return {
-        codec: registry.getScaleCodec(),
+        codec: new Codec(registry.registry),
         type
     }
 }

@@ -22,14 +22,32 @@ export interface TupleType {
 }
 
 
-export class TypeExpParser {
-    static parse(typeExp: string): Type {
-        return new TypeExpParser(typeExp).parse()
+export function print(type: Type): string {
+    switch(type.kind) {
+        case 'array':
+            return `[${print(type.item)}; ${type.len}]`
+        case 'tuple':
+            return `(${type.params.map(t => print(t)).join(', ')})`
+        case 'named': {
+            if (type.params.length == 0) {
+                return type.name
+            } else {
+                return `${type.name}<${type.params.map(t => print(t)).join(', ')}>`
+            }
+        }
     }
+}
 
+
+export function parse(typeExp: string): Type {
+    return new TypeExpParser(typeExp).parse()
+}
+
+
+class TypeExpParser {
     private tokens: string[] = []
 
-    private constructor(private typeExp: string) {
+    constructor(private typeExp: string) {
         let word = ''
         for (let i = 0; i < typeExp.length; i++) {
             let c = typeExp[i]
@@ -144,7 +162,7 @@ export class TypeExpParser {
         return this.tuple() || this.array() || this.namedType()
     }
 
-    private parse(): Type {
+    parse(): Type {
         let type = this.assert(this.anyType())
         if (this.tokens.length > 0) {
             throw this.abort()
@@ -161,23 +179,6 @@ export class TypeExpParser {
             throw this.abort()
         } else {
             return val
-        }
-    }
-}
-
-
-export function printType(type: Type): string {
-    switch(type.kind) {
-        case 'array':
-            return `[${printType(type.item)}; ${type.len}]`
-        case 'tuple':
-            return `(${type.params.map(t => printType(t)).join(', ')})`
-        case 'named': {
-            if (type.params.length == 0) {
-                return type.name
-            } else {
-                return `${type.name}<${type.params.map(t => printType(t)).join(', ')}>`
-            }
         }
     }
 }

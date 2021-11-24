@@ -1,6 +1,6 @@
-import {Codec as ScaleCodec, Field, Primitive, Ti, Type as ScaleType, TypeKind, Variant} from "../../scale"
 import {unexpectedCase} from "../../util/util"
-import {ArrayType, NamedType, printType, TupleType, Type, TypeExpParser} from "./typeExp"
+import {Field, Primitive, Ti, Type, TypeKind, TypeRegistry, Variant} from "../types"
+import * as texp from "./typeExp"
 
 
 export type OldTypeDefinition = OldTypeExp | OldEnumDefinition | OldStructDefinition
@@ -31,33 +31,29 @@ export interface OldTypes {
 
 
 export class OldTypeRegistry {
-    private scaleTypes: ScaleType[] = []
+    public readonly registry: TypeRegistry = []
     private lookup = new Map<OldTypeExp, Ti>()
 
-    constructor(private types: OldTypes) {}
+    constructor(private oldTypes: OldTypes) {}
 
-    getScaleCodec(): ScaleCodec {
-        return new ScaleCodec(this.scaleTypes)
-    }
-
-    use(typeExp: OldTypeExp | Type): Ti {
-        let type = typeof typeExp == 'string' ? TypeExpParser.parse(typeExp) : typeExp
-        let key = printType(type)
+    use(typeExp: OldTypeExp | texp.Type): Ti {
+        let type = typeof typeExp == 'string' ? texp.parse(typeExp) : typeExp
+        let key = texp.print(type)
         let ti = this.lookup.get(key)
         if (ti == null) {
-            ti = this.scaleTypes.push({kind: TypeKind.DoNotConstruct}) - 1
+            ti = this.registry.push({kind: TypeKind.DoNotConstruct}) - 1
             this.lookup.set(key, ti)
             let t = this.buildScaleType(type)
             if (typeof t == 'number') {
-                this.scaleTypes[ti] = this.scaleTypes[t]
+                this.registry[ti] = this.registry[t]
             } else {
-                this.scaleTypes[ti] = t
+                this.registry[ti] = t
             }
         }
         return ti
     }
 
-    private buildScaleType(type: Type): ScaleType | Ti {
+    private buildScaleType(type: texp.Type): Type | Ti {
         switch(type.kind) {
             case 'named':
                 return this.buildNamedType(type)
@@ -70,7 +66,7 @@ export class OldTypeRegistry {
         }
     }
 
-    private buildNamedType(type: NamedType): ScaleType | Ti {
+    private buildNamedType(type: texp.NamedType): Type | Ti {
         let primitive = asPrimitive(type.name)
         if (primitive) {
             assertNoParams(type)
@@ -118,20 +114,25 @@ export class OldTypeRegistry {
             // Following polkadot.js we ignore all type parameters which we don't understand
             return this.use(type.name)
         }
-        let def = this.types.types[type.name]
+        let def = this.oldTypes.types[type.name]
         if (def == null) {
             throw new Error(`Type ${type.name} is not defined`)
         }
+        let result: Type | Ti
         if (typeof def == 'string') {
-            return this.use(def)
+            result = this.use(def)
         } else if (def._enum) {
-            return this.buildEnum(def as OldEnumDefinition)
+            result = this.buildEnum(def as OldEnumDefinition)
         } else {
-            return this.buildStruct(def as OldStructDefinition)
+            result = this.buildStruct(def as OldStructDefinition)
         }
+        if (typeof result == 'object') {
+            result.path = [type.name]
+        }
+        return result
     }
 
-    private buildEnum(def: OldEnumDefinition): ScaleType {
+    private buildEnum(def: OldEnumDefinition): Type {
         let variants: Variant[] = []
         if (Array.isArray(def._enum)) {
             variants = def._enum.map((name, index) => {
@@ -173,7 +174,7 @@ export class OldTypeRegistry {
         }
     }
 
-    private buildStruct(def: OldStructDefinition): ScaleType {
+    private buildStruct(def: OldStructDefinition): Type {
         let fields: Field[] = []
         for (let name in def) {
             fields.push({
@@ -187,7 +188,7 @@ export class OldTypeRegistry {
         }
     }
 
-    private buildArray(type: ArrayType): ScaleType {
+    private buildArray(type: texp.ArrayType): Type {
         return {
             kind: TypeKind.Array,
             type: this.use(type.item),
@@ -195,7 +196,7 @@ export class OldTypeRegistry {
         }
     }
 
-    private buildTuple(type: TupleType): ScaleType {
+    private buildTuple(type: texp.TupleType): Type {
         return {
             kind: TypeKind.Tuple,
             tuple: type.params.map(p => this.use(p))
@@ -204,7 +205,7 @@ export class OldTypeRegistry {
 }
 
 
-function assertOneParam(type: NamedType): Type {
+function assertOneParam(type: texp.NamedType): texp.Type {
     if (type.params.length != 1) {
         throw new Error(`${type.name} should have 1 type parameter`)
     }
@@ -212,7 +213,7 @@ function assertOneParam(type: NamedType): Type {
 }
 
 
-function assertNoParams(type: NamedType): void {
+function assertNoParams(type: texp.NamedType): void {
     if (type.params.length != 0) {
         throw new Error(`${type.name} should not have type parameters`)
     }

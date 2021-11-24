@@ -1,4 +1,4 @@
-import {QualifiedName} from "../metadata-old/base"
+import {QualifiedName} from "../old/metadata-old/base"
 import {assertNotNull} from "../util/util"
 import {EventHandler} from "./interfaces/handlerContext"
 import {Range} from "../util/range"

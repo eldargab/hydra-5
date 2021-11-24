@@ -28,14 +28,7 @@ export function normalizeTypes(types: Type[]): Type[] {
                     return type
                 }
             case TypeKind.Variant: {
-                let variants = type.variants.map((v, index) => {
-                    if (v == null) return null
-                    if (v.index == null) {
-                        return {...v, index}
-                    } else {
-                        return v
-                    }
-                }).filter(v => v != null) as (Variant & {index: number})[]
+                let variants = type.variants.filter(v => v != null) as Variant[]
                 let uniqueIndexes = new Set(variants.map(v => v.index))
                 if (uniqueIndexes.size != variants.length) {
                     throw new Error(`Variant type ${ti} has duplicate case indexes`)

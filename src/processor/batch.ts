@@ -1,4 +1,4 @@
-import {QualifiedName} from "../metadata-old/base"
+import {QualifiedName} from "../old/metadata-old/base"
 import {Heap} from "../util/heap"
 import {Range, rangeDifference, rangeIntersection} from "../util/range"
 import {assertNotNull} from "../util/util"

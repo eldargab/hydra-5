@@ -1,6 +1,6 @@
 import {Spec, SpecVersion, toQualifiedName} from "../metadata-old/base"
-import type {OutDir} from "../util/out"
-import {assertNotNull, def, groupBy} from "../util/util"
+import type {OutDir} from "../../util/out"
+import {assertNotNull, def, groupBy} from "../../util/util"
 import {Event, eventEquals} from "./event"
 import {Interfaces} from "./ifs"
 import {Imports, POLKADOT_LIB} from "./imports"
