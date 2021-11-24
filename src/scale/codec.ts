@@ -1,19 +1,18 @@
-import assert from "assert"
 import {decode} from "./decode"
 import {Src} from "./src"
-import type {Registry, Ti, Type} from "./types"
-import {toRegistry} from "./util"
+import type {Ti, Type} from "./types"
+import {normalizeTypes} from "./util"
 
 
 export class Codec {
-    private registry: Registry
+    private types: Type[]
 
     constructor(types: Type[]) {
-        this.registry = toRegistry(types)
+        this.types = normalizeTypes(types)
     }
 
     decode(type: Ti, src: Src): any {
-        return decode(this.registry, type, src)
+        return decode(this.types, type, src)
     }
 
     decodeBinary(type: Ti, data: string | Uint8Array): any {

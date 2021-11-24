@@ -1,7 +1,7 @@
 import {Primitive, Registry, Ti, Type, TypeKind, Variant} from "./types"
 
 
-export function toRegistry(types: Type[]): Registry {
+export function normalizeTypes(types: Type[]): Registry {
     function isPrimitive(primitive: Primitive, ti: Ti): boolean {
         let type = types[ti]
         return type.kind == TypeKind.Primitive && type.primitive == primitive
@@ -13,19 +13,19 @@ export function toRegistry(types: Type[]): Registry {
                 if (isPrimitive('U8', type.type)) {
                     return {kind: TypeKind.Bytes}
                 } else {
-                    return {...type, checked: true}
+                    return type
                 }
             case TypeKind.Array:
                 if (isPrimitive('U8', type.type)) {
                     return {kind: TypeKind.BytesArray, len: type.len}
                 } else {
-                    return {...type, checked: true}
+                    return type
                 }
             case TypeKind.Option:
                 if (isPrimitive('Bool', type.type)) {
                     return {kind: TypeKind.BooleanOption}
                 } else {
-                    return {...type, checked: true}
+                    return type
                 }
             default:
                 return type

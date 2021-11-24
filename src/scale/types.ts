@@ -144,35 +144,4 @@ export type Type =
     DoNotConstructType
 
 
-interface CheckedOptionType extends OptionType {
-    checked: true
-}
-
-
-interface CheckedSequenceType extends SequenceType {
-    checked: true
-}
-
-
-interface CheckedArrayType extends ArrayType {
-    checked: true
-}
-
-
-type CheckedType =
-    PrimitiveType |
-    CompactType |
-    CheckedSequenceType |
-    BitSequenceType |
-    CheckedArrayType |
-    TupleType |
-    CompositeType |
-    VariantType |
-    CheckedOptionType |
-    BooleanOptionType |
-    BytesType |
-    BytesArrayType |
-    DoNotConstructType
-
-
-export type Registry = CheckedType[]
+export type Registry = Type[]
