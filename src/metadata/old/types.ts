@@ -1,5 +1,6 @@
 import {unexpectedCase} from "../../util/util"
 import {Field, Primitive, Ti, Type, TypeKind, TypeRegistry, Variant} from "../types"
+import {normalizeByteSequences} from "../util"
 import * as texp from "./typeExp"
 
 
@@ -31,10 +32,14 @@ export interface OldTypes {
 
 
 export class OldTypeRegistry {
-    public readonly registry: TypeRegistry = []
+    private registry: TypeRegistry = []
     private lookup = new Map<OldTypeExp, Ti>()
 
     constructor(private oldTypes: OldTypes) {}
+
+    getTypeRegistry(): TypeRegistry {
+        return normalizeByteSequences(this.registry)
+    }
 
     use(typeExp: OldTypeExp | texp.Type): Ti {
         let type = typeof typeExp == 'string' ? texp.parse(typeExp) : typeExp
@@ -89,7 +94,9 @@ export class OldTypeRegistry {
             }
             case 'Bytes': {
                 assertNoParams(type)
-                return this.use('Vec<u8>')
+                return {
+                    kind: TypeKind.Bytes
+                }
             }
             case 'Option': {
                 let param = this.use(assertOneParam(type))

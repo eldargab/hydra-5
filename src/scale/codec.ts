@@ -146,7 +146,7 @@ export class Codec {
         if (variant.fields[0].name == null) {
             return {
                 __kind: variant.name,
-                [variant.name]: this.decodeCompositeTuple(variant.fields, src)
+                value: this.decodeCompositeTuple(variant.fields, src)
             }
         }
         let value = this.decodeComposite(variant, src)
@@ -158,7 +158,7 @@ export class Codec {
         let byte = src.u8()
         switch(byte) {
             case 0:
-                return null
+                return undefined
             case 1:
                 return this.decode(def.type, src)
             default:
