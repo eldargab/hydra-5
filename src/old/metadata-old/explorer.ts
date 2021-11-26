@@ -123,7 +123,7 @@ async function getVersionAt(api: ApiPromise, height: number): Promise<Version> {
 }
 
 
-async function getChainHeight(api: ApiPromise): Promise<number> {
+export async function getChainHeight(api: ApiPromise): Promise<number> {
     let hash = await api.rpc.chain.getFinalizedHead()
     let header = await api.rpc.chain.getHeader(hash)
     return header.number.toNumber()

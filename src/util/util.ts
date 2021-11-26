@@ -25,6 +25,10 @@ export function lowerCaseFirst(s: string): string {
 }
 
 
+export function decodeHex(hex: string): Buffer {
+    return Buffer.from(hex.slice(2), 'hex')
+}
+
 export function groupBy<T, G>(arr: T[], group: (t: T) => G): Map<G, T[]> {
     let grouping = new Map<G, T[]>()
     for (let i = 0; i < arr.length; i++) {
