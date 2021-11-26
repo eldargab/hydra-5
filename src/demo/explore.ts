@@ -1,13 +1,14 @@
-import * as fs from "fs"
-import {SpecCache} from "../old/metadata-old/cache"
+import fs from "fs"
+import {RpcClient} from "../rpc/client"
 
 
 async function main(): Promise<void> {
-    let spec = SpecCache.read('chainSpec.json')
-    let out = JSON.stringify(spec.map(s => {
-        return {...s, metadata: s.metadata.toHex()}
-    }), null, 2)
-    fs.writeFileSync('chainSpecBinary.json', out)
+    let client = new RpcClient('wss://kusama-rpc.polkadot.io/')
+    let specs = JSON.parse(fs.readFileSync('chainSpecBinary.json', 'utf-8'))
+    let metadataRequests = specs.slice(0, 10).map((s: any) => {
+        return ['state_getMetadata', [s.blockHash]]
+    })
+    let metadata = await client.batch(metadataRequests)
 }
 
 
