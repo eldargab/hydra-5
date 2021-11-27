@@ -1,13 +1,14 @@
 import * as fs from "fs"
-import {decodeMetadata} from "../metadata/codec"
+import {createChainSpecFromMetadata, decodeMetadata} from "../metadata"
+import {ChainVersion} from "../metadata-explorer"
+import {readJson} from "../util/util"
 
 
 async function main(): Promise<void> {
-    let specs: any[] = JSON.parse(fs.readFileSync('chainSpecBinary.json', 'utf-8'))
-    let beg = Date.now()
-    let decoded = specs.map(spec => decodeMetadata(spec.metadata))
-    let end = Date.now()
-    console.log(end - beg)
+    let versions: ChainVersion[] = JSON.parse(fs.readFileSync('chainVersions.json', 'utf-8'))
+    let version = versions[51]
+    let metadata = decodeMetadata(version.metadata)
+    let spec = createChainSpecFromMetadata(metadata, {types: readJson('types.json')})
 }
 
 

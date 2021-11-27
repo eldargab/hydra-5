@@ -4,22 +4,22 @@ import {RpcClient} from "./rpc/client"
 export type SpecVersion = number
 
 
-export interface VersionRecord {
+export interface _Version {
     specVersion: SpecVersion
     blockNumber: number
     blockHash: string
 }
 
 
-export interface MetadataRecord extends VersionRecord {
+export interface ChainVersion extends _Version {
     metadata: string
 }
 
 
-export type ChainSpec = MetadataRecord[]
+export type ChainVersions = ChainVersion[]
 
 
-export async function getChainSpec(url: string): Promise<ChainSpec> {
+export async function getChainVersions(url: string): Promise<ChainVersion[]> {
     let client = new RpcClient(url)
     let headHash = await client.call('chain_getFinalizedHead')
     let height = await client.call('chain_getHeader', [headHash]).then((head: any) => {
@@ -33,17 +33,17 @@ export async function getChainSpec(url: string): Promise<ChainSpec> {
 
 
 class Explorer {
-    private queue: [beg: VersionRecord, end: VersionRecord][] = []
-    private versions = new Map<SpecVersion, VersionRecord>()
+    private queue: [beg: _Version, end: _Version][] = []
+    private versions = new Map<SpecVersion, _Version>()
 
     private constructor(
         private first: number,
         private last: number,
-        private fetch: (heights: number[]) => Promise<VersionRecord[]>
+        private fetch: (heights: number[]) => Promise<_Version[]>
     ) {
     }
 
-    private add(v: VersionRecord): void {
+    private add(v: _Version): void {
         this.versions.set(v.specVersion, v)
     }
 
@@ -83,8 +83,8 @@ class Explorer {
 
     static async getVersions(
         blockRange: [beg: number, end: number],
-        fetch: (heights: number[]) => Promise<VersionRecord[]>
-    ): Promise<VersionRecord[]> {
+        fetch: (heights: number[]) => Promise<_Version[]>
+    ): Promise<_Version[]> {
         let explorer = new Explorer(blockRange[0], blockRange[1], fetch)
         await explorer.explore()
         return Array.from(explorer.versions.values()).sort((a, b) => a.blockNumber - b.blockNumber)
@@ -92,7 +92,7 @@ class Explorer {
 }
 
 
-async function fetchVersionsFromChain(client: RpcClient, heights: number[]): Promise<VersionRecord[]> {
+async function fetchVersionsFromChain(client: RpcClient, heights: number[]): Promise<_Version[]> {
     let hashes = checkBatch(await client.batch(
         heights.map(h => {
             return ['chain_getBlockHash', [h]]
@@ -126,8 +126,8 @@ function checkBatch<T>(batchResponse: (T | Error)[]): T[] {
 }
 
 
-async function fetchMetadata(client: RpcClient, versions: VersionRecord[]): Promise<MetadataRecord[]> {
-    let records: MetadataRecord[] = []
+async function fetchMetadata(client: RpcClient, versions: _Version[]): Promise<ChainVersion[]> {
+    let records: ChainVersion[] = []
     while (versions.length) {
         let batch = versions.slice(0, 10)
         versions = versions.slice(10)

@@ -85,6 +85,16 @@ export class OldTypeRegistry {
                 return {
                     kind: TypeKind.DoNotConstruct
                 }
+            case 'Null':
+                return {
+                    kind: TypeKind.Tuple,
+                    tuple: []
+                }
+            case 'GenericAccountId':
+                return {
+                    kind: TypeKind.BytesArray,
+                    len: 32
+                }
             case 'Vec': {
                 let param = this.use(assertOneParam(type))
                 return {
@@ -156,7 +166,6 @@ export class OldTypeRegistry {
                 let fields: Field[] = []
                 if (typeof type == 'string') {
                     fields.push({
-                        name: null,
                         type: this.use(type)
                     })
                 } else if (type != null) {
@@ -208,6 +217,10 @@ export class OldTypeRegistry {
             kind: TypeKind.Tuple,
             tuple: type.params.map(p => this.use(p))
         }
+    }
+
+    add(type: Type): Ti {
+        return this.registry.push(type) - 1
     }
 }
 

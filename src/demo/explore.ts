@@ -1,7 +1,7 @@
-import {getChainSpec} from "../metadata-explorer"
+import {getChainVersions} from "../metadata-explorer"
 
 async function main(): Promise<void> {
-    await getChainSpec(process.argv[2])
+    await getChainVersions(process.argv[2])
 }
 
 

@@ -9,7 +9,8 @@ export type Primitive =
     'I128' | 'U128' |
     'I256' | 'U256' |
     'Bool' |
-    'Str'
+    'Str' |
+    'Char'
 
 
 export enum TypeKind {
@@ -83,7 +84,7 @@ export interface CompositeType {
 
 
 export interface Field {
-    name: string | null
+    name?: string | undefined
     type: Ti
 }
 

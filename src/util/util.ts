@@ -1,4 +1,5 @@
 import assert from "assert"
+import * as fs from "fs"
 
 
 export function arrayEquals<T>(a: T[], b: T[], eq?: (a: T, b: T) => boolean): boolean {
@@ -82,4 +83,10 @@ export function def(proto: any, prop: string, d: PropertyDescriptor): PropertyDe
 
 export function unexpectedCase(val?: unknown): Error {
     return new Error(val ? `Unexpected case: ${val}` : `Unexpected case`)
+}
+
+
+export function readJson<T=any>(file: string): T {
+    let json = fs.readFileSync(file, 'utf-8')
+    return JSON.parse(json)
 }

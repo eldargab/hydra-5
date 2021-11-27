@@ -1,13 +1,14 @@
 import assert from "assert"
 import {Codec, Src, Ti} from "../scale"
 import * as metadataDefinition from "./definition"
+import {Metadata} from "./interfaces"
 import {OldTypeRegistry} from "./old/types"
 
 
 const {codec, type} = createScaleCodec()
 
 
-export function decodeMetadata(data: string | Uint8Array): any {
+export function decodeMetadata(data: string | Uint8Array): Metadata {
     if (typeof data == 'string') {
         data = Buffer.from(data.slice(2), 'hex')
     }
