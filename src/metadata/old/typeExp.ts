@@ -5,7 +5,7 @@ export type Type = NamedType | ArrayType | TupleType
 export interface NamedType {
     kind: 'named'
     name: string
-    params: Type[]
+    params: (Type | number)[]
 }
 
 
@@ -32,7 +32,7 @@ export function print(type: Type): string {
             if (type.params.length == 0) {
                 return type.name
             } else {
-                return `${type.name}<${type.params.map(t => print(t)).join(', ')}>`
+                return `${type.name}<${type.params.map(t => typeof t == 'number' ? ''+t : print(t)).join(', ')}>`
             }
         }
     }
@@ -146,9 +146,9 @@ class TypeExpParser {
     private namedType(): NamedType | null {
         let name = this.name()
         if (name == null) return null
-        let params: Type[] = []
+        let params: (Type | number)[] = []
         if (this.tok('<')) {
-            params = this.list(',', () => this.anyType())
+            params = this.list(',', () => this.anyType() || this.nat())
             this.assertTok('>')
         }
         return {
@@ -157,6 +157,7 @@ class TypeExpParser {
             params
         }
     }
+
 
     private anyType(): Type | null {
         return this.tuple() || this.array() || this.namedType()

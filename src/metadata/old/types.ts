@@ -1,10 +1,11 @@
-import {unexpectedCase} from "../../util/util"
+import assert from "assert"
+import {assertNotNull, unexpectedCase} from "../../util/util"
 import {Field, Primitive, Ti, Type, TypeKind, TypeRegistry, Variant} from "../types"
 import {normalizeByteSequences} from "../util"
 import * as texp from "./typeExp"
 
 
-export type OldTypeDefinition = OldTypeExp | OldEnumDefinition | OldStructDefinition
+export type OldTypeDefinition = OldTypeExp | OldEnumDefinition | OldStructDefinition | OldSetDefinition
 
 
 export type OldTypeExp = string
@@ -15,6 +16,15 @@ export interface OldStructDefinition extends Record<string, OldTypeExp> {}
 
 export interface OldEnumDefinition {
     _enum: string[] | Record<string, OldTypeExp | OldStructDefinition | null>
+    _set?: undefined
+}
+
+
+export interface OldSetDefinition {
+    _set: {
+        _bitLength: number
+    }
+    _enum?: undefined
 }
 
 
@@ -39,6 +49,14 @@ export class OldTypeRegistry {
 
     getTypeRegistry(): TypeRegistry {
         return normalizeByteSequences(this.registry)
+    }
+
+    create(typeName: string, fn: () => Type): Ti {
+        assert(!this.lookup.has(typeName), `Type ${typeName} was already defined`)
+        let ti = this.registry.push({kind: TypeKind.DoNotConstruct}) - 1
+        this.lookup.set(typeName, ti)
+        this.registry[ti] = fn()
+        return ti
     }
 
     use(typeExp: OldTypeExp | texp.Type): Ti {
@@ -90,11 +108,8 @@ export class OldTypeRegistry {
                     kind: TypeKind.Tuple,
                     tuple: []
                 }
-            case 'GenericAccountId':
-                return {
-                    kind: TypeKind.BytesArray,
-                    len: 32
-                }
+            case 'UInt':
+                return convertGenericIntegerToPrimitive('U', type)
             case 'Vec': {
                 let param = this.use(assertOneParam(type))
                 return {
@@ -102,6 +117,12 @@ export class OldTypeRegistry {
                     type: param
                 }
             }
+            case 'BitVec':
+                return {
+                    kind: TypeKind.BitSequence,
+                    bitStoreType: this.use('U8'),
+                    bitOrderType: -1
+                }
             case 'Bytes': {
                 assertNoParams(type)
                 return {
@@ -115,15 +136,37 @@ export class OldTypeRegistry {
                     type: param
                 }
             }
+            case 'Result': {
+                let [ok, error] = assertTwoParams(type)
+                return {
+                    kind: TypeKind.Variant,
+                    variants: [
+                        {
+                            index: 0,
+                            name: 'Ok',
+                            fields: [
+                                {type: this.use(ok)}
+                            ]
+                        },
+                        {
+                            index: 1,
+                            name: 'Err',
+                            fields: [
+                                {type: this.use(error)}
+                            ]
+                        }
+                    ]
+                }
+            }
             case 'Compact': {
-                let param = assertOneParam(type)
-                let primitive = param.kind == 'named' && asPrimitive(param.name)
-                if (!primitive || primitive[0] != 'U') {
-                    throw new Error(`Only primitive unsigned numbers can be compact`)
+                let param = this.use(assertOneParam(type))
+                let paramDef = this.registry[param]
+                if (paramDef.kind != TypeKind.Primitive || paramDef.primitive[0] != 'U') {
+                    throw new Error(`Invalid type ${texp.print(type)}: only primitive unsigned numbers can be compact`)
                 }
                 return {
                     kind: TypeKind.Compact,
-                    type: this.use(param)
+                    type: param
                 }
             }
         }
@@ -140,6 +183,8 @@ export class OldTypeRegistry {
             result = this.use(def)
         } else if (def._enum) {
             result = this.buildEnum(def as OldEnumDefinition)
+        } else if (def._set) {
+            result = this.buildSet(def as OldSetDefinition)
         } else {
             result = this.buildStruct(def as OldStructDefinition)
         }
@@ -147,6 +192,22 @@ export class OldTypeRegistry {
             result.path = [type.name]
         }
         return result
+    }
+
+    private buildSet(def: OldSetDefinition): Type | Ti {
+        let len = def._set._bitLength
+        switch(len) {
+            case 8:
+            case 16:
+            case 32:
+            case 64:
+            case 128:
+            case 256:
+                return this.use('U'+len)
+            default:
+                assert(len % 8 == 0, 'bit length must me aligned')
+                return this.use(`[u8; ${len / 8}]`)
+        }
     }
 
     private buildEnum(def: OldEnumDefinition): Type {
@@ -222,20 +283,69 @@ export class OldTypeRegistry {
     add(type: Type): Ti {
         return this.registry.push(type) - 1
     }
+
+    get(ti: Ti): Type {
+        return assertNotNull(this.registry[ti])
+    }
 }
 
 
 function assertOneParam(type: texp.NamedType): texp.Type {
     if (type.params.length != 1) {
-        throw new Error(`${type.name} should have 1 type parameter`)
+        throw new Error(`Invalid type ${texp.print(type)}: one type parameter expected`)
     }
-    return type.params[0]
+    let param = type.params[0]
+    if (typeof param == 'number') {
+        throw new Error(`Invalid type ${texp.print(type)}: type parameter should refer to a type, not to bit size`)
+    }
+    return param
+}
+
+
+function assertTwoParams(type: texp.NamedType): [texp.Type, texp.Type] {
+    if (type.params.length < 2) {
+        throw new Error(`Invalid type ${texp.print(type)}: two type parameters expected`)
+    }
+    let param1 = type.params[0]
+    if (typeof param1 == 'number') {
+        throw new Error(`Invalid type ${texp.print(type)}: first type parameter should refer to a type, not to bit size`)
+    }
+    let param2 = type.params[0]
+    if (typeof param2 == 'number') {
+        throw new Error(`Invalid type ${texp.print(type)}: second type parameter should refer to a type, not to bit size`)
+    }
+    return [param1, param2]
 }
 
 
 function assertNoParams(type: texp.NamedType): void {
     if (type.params.length != 0) {
-        throw new Error(`${type.name} should not have type parameters`)
+        throw new Error(`Invalid type ${texp.print(type)}: no type parameters expected for ${type.name}`)
+    }
+}
+
+
+function convertGenericIntegerToPrimitive(kind: 'U' | 'I', type: texp.NamedType): Type {
+    if (type.params.length == 0) {
+        throw new Error(`Invalid type ${texp.print(type)}: bit size is not specified`)
+    }
+    let size = type.params[0]
+    if (typeof size != 'number') {
+        throw new Error(`Invalid type ${texp.print(type)}: bit size expected as a first type parameter, e.g. ${type.name}<32>`)
+    }
+    switch(size) {
+        case 8:
+        case 16:
+        case 32:
+        case 64:
+        case 128:
+        case 256:
+            return {
+                kind: TypeKind.Primitive,
+                primitive: `${kind}${size}` as Primitive
+            }
+        default:
+            throw new Error(`Invalid type ${texp.print(type)}: invalid bit size ${size}`)
     }
 }
 
