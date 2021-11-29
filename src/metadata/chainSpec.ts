@@ -8,7 +8,10 @@ import {normalizeByteSequences} from "./util"
 
 export interface ChainSpec {
     types: TypeRegistry
-    calls: Ti
+    call: Ti
+    event: Ti
+    eventRecord: Ti
+    eventRecordList: Ti
 }
 
 
@@ -92,10 +95,34 @@ function fromV14(metadata: MetadataV14): ChainSpec {
 
     types = normalizeByteSequences(types)
 
+    let eventRecord = getTypeByPath(types, ['frame_system', 'EventRecord'])
+    let eventRecordList = types.findIndex(type => type.kind == TypeKind.Sequence && type.type == eventRecord)
+    if (eventRecordList < 0) {
+        eventRecordList = types.push({kind: TypeKind.Sequence, type: eventRecord}) - 1
+    }
+
     return {
         types,
-        calls: metadata.extrinsic.type // FIXME: not correct
+        call: -1,
+        event: -1,
+        eventRecord,
+        eventRecordList
     }
+}
+
+
+function getTypeByPath(types: TypeRegistry, path: string[]): Ti {
+    let idx = types.findIndex(type => {
+        if (type.path?.length != path.length) return false
+        for (let i = 0; i < path.length; i++) {
+            if (path[i] != type.path[i]) return false
+        }
+        return true
+    })
+    if (idx < 0) {
+        throw new Error(`Type ${path.join('::')} not found`)
+    }
+    return idx
 }
 
 
@@ -108,15 +135,21 @@ class FromOld {
 
     convert(): ChainSpec {
         // order is important
-        let calls = this.calls()
+        let call = this.call()
+        let event = this.event()
+        let eventRecord = this.registry.use('EventRecord')
+        let eventRecordList = this.registry.use('Vec<EventRecord>')
         return {
             types: this.registry.getTypeRegistry(),
-            calls
+            call,
+            event,
+            eventRecord,
+            eventRecordList
         }
     }
 
     @def
-    private calls(): Ti {
+    private call(): Ti {
         return this.registry.create('GenericCall', () => {
             let variants: Variant[] = []
             this.forEachPallet_Call((palletName, index, calls) => {
@@ -131,6 +164,26 @@ class FromOld {
             return {
                 kind: TypeKind.Variant,
                 variants: variants
+            }
+        })
+    }
+
+    @def
+    private event(): Ti {
+        return this.registry.create('GenericEvent', () => {
+            let variants: Variant[] = []
+            this.forEachPallet_Event((palletName, index, events) => {
+                variants.push({
+                    name: palletName,
+                    index,
+                    fields: [
+                        {type: assertNotNull(this.makeEventEnum(events))}
+                    ]
+                })
+            })
+            return {
+                kind: TypeKind.Variant,
+                variants
             }
         })
     }
@@ -180,11 +233,46 @@ class FromOld {
 
     private forEachPallet_Call(cb: (palletName: string, palletIndex: number, calls: FunctionMetadataV9[]) => void): void {
         switch(this.metadata.__kind) {
+            case 'V9':
+            case 'V10':
+            case 'V11': {
+                let index = 0
+                this.metadata.value.modules.forEach(mod => {
+                    if (!mod.calls?.length) return
+                    cb(mod.name, index, mod.calls)
+                    index += 1
+                })
+                return
+            }
             case 'V12':
             case 'V13': {
                 this.metadata.value.modules.forEach(mod => {
                     if (!mod.calls?.length) return
                     cb(mod.name, mod.index, mod.calls)
+                })
+                return
+            }
+        }
+    }
+
+    private forEachPallet_Event(cb: (palletName: string, palletIndex: number, events: EventMetadataV9[]) => void): void {
+        switch(this.metadata.__kind) {
+            case 'V9':
+            case 'V10':
+            case 'V11': {
+                let index = 0
+                this.metadata.value.modules.forEach(mod => {
+                    if (!mod.events?.length) return
+                    cb(mod.name, index, mod.events)
+                    index += 1
+                })
+                return
+            }
+            case 'V12':
+            case 'V13': {
+                this.metadata.value.modules.forEach(mod => {
+                    if (!mod.events?.length) return
+                    cb(mod.name, mod.index, mod.events)
                 })
                 return
             }

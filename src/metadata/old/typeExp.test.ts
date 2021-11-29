@@ -1,11 +1,11 @@
 import expect from "expect"
-import {print, Type, TypeExpParser} from "./typeExp"
+import {parse, print, Type} from "./typeExp"
 
 describe('Type expressions', function () {
     describe('TypeExpParser', function () {
         function test(exp: string, type: Type): void {
             it(exp, () => {
-                let parsed = TypeExpParser.parse(exp)
+                let parsed = parse(exp)
                 expect(parsed).toEqual(type)
             })
         }
@@ -75,7 +75,7 @@ describe('Type expressions', function () {
     describe('print(parse(exp)) == exp', function () {
         function test(exp: string): void {
             it(exp, () => {
-                let type = TypeExpParser.parse(exp)
+                let type = parse(exp)
                 let printed = print(type)
                 expect(printed).toEqual(exp)
             })
