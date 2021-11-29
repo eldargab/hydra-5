@@ -1,12 +1,13 @@
 import assert from "assert"
 import {assertNotNull, def} from "../util/util"
 import type {EventMetadataV9, FunctionMetadataV9, Metadata, MetadataV14} from "./interfaces"
-import {OldTypeRegistry, OldTypes} from "./old/types"
+import {OldTypeRegistry} from "./old/typeRegistry"
+import {OldTypes} from "./old/types"
 import {Ti, TypeKind, TypeRegistry, Variant} from "./types"
-import {normalizeByteSequences} from "./util"
+import {getTypeByPath, normalizeByteSequences} from "./util"
 
 
-export interface ChainSpec {
+export interface ChainDescription {
     types: TypeRegistry
     call: Ti
     event: Ti
@@ -15,7 +16,7 @@ export interface ChainSpec {
 }
 
 
-export function createChainSpecFromMetadata(metadata: Metadata, oldTypes?: OldTypes): ChainSpec {
+export function getChainDescriptionFromMetadata(metadata: Metadata, oldTypes?: OldTypes): ChainDescription {
     switch(metadata.__kind) {
         case "V9":
         case "V10":
@@ -32,7 +33,7 @@ export function createChainSpecFromMetadata(metadata: Metadata, oldTypes?: OldTy
 }
 
 
-function fromV14(metadata: MetadataV14): ChainSpec {
+function fromV14(metadata: MetadataV14): ChainDescription {
     let types: TypeRegistry = metadata.lookup.types.map(t => {
         let info = {
             path: t.type.path,
@@ -111,29 +112,14 @@ function fromV14(metadata: MetadataV14): ChainSpec {
 }
 
 
-function getTypeByPath(types: TypeRegistry, path: string[]): Ti {
-    let idx = types.findIndex(type => {
-        if (type.path?.length != path.length) return false
-        for (let i = 0; i < path.length; i++) {
-            if (path[i] != type.path[i]) return false
-        }
-        return true
-    })
-    if (idx < 0) {
-        throw new Error(`Type ${path.join('::')} not found`)
-    }
-    return idx
-}
-
-
 class FromOld {
-    private registry
+    private registry: OldTypeRegistry
 
     constructor(private metadata: Metadata, oldTypes: OldTypes) {
         this.registry = new OldTypeRegistry(oldTypes)
     }
 
-    convert(): ChainSpec {
+    convert(): ChainDescription {
         // order is important
         let call = this.call()
         let event = this.event()

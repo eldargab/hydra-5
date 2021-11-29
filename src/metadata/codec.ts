@@ -1,8 +1,8 @@
 import assert from "assert"
 import {Codec, Src, Ti} from "../scale"
-import * as metadataDefinition from "./definition"
+import * as metadataDefinition from "./old/definitions/metadata"
 import {Metadata} from "./interfaces"
-import {OldTypeRegistry} from "./old/types"
+import {OldTypeRegistry} from "./old/typeRegistry"
 
 
 const {codec, type} = createScaleCodec()

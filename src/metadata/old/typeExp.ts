@@ -1,3 +1,5 @@
+import {sanitize} from "./sanitizeHack"
+
 
 export type Type = NamedType | ArrayType | TupleType
 
@@ -45,36 +47,25 @@ export function parse(typeExp: string): Type {
 
 
 class TypeExpParser {
-    private tokens: string[] = []
+    private tokens: string[]
+    private idx = 0
 
     constructor(private typeExp: string) {
-        let word = ''
-        for (let i = 0; i < typeExp.length; i++) {
-            let c = typeExp[i]
-            if (/\w/.test(c)) {
-                word += c
-            } else {
-                if (word) {
-                    this.tokens.push(word)
-                    word = ''
-                }
-                if (c.trim()) {
-                    this.tokens.push(c)
-                }
-            }
-        }
-        if (word) {
-            this.tokens.push(word)
-        }
+        this.tokens = tokenize(sanitize(typeExp))
+    }
+
+    private eof(): boolean {
+        return this.idx >= this.tokens.length
     }
 
     private tok(tok: string | RegExp): string | null {
-        let current = this.tokens[0]
+        if (this.eof()) return null
+        let current = this.tokens[this.idx]
         let match = tok instanceof RegExp
             ? !!current && tok.test(current)
             : current === tok
         if (match) {
-            this.tokens.shift()
+            this.idx += 1
             return current
         } else {
             return null
@@ -165,7 +156,7 @@ class TypeExpParser {
 
     parse(): Type {
         let type = this.assert(this.anyType())
-        if (this.tokens.length > 0) {
+        if (!this.eof()) {
             throw this.abort()
         }
         return type
@@ -182,4 +173,28 @@ class TypeExpParser {
             return val
         }
     }
+}
+
+
+function tokenize(typeExp: string): string[] {
+    let tokens: string[] = []
+    let word = ''
+    for (let i = 0; i < typeExp.length; i++) {
+        let c = typeExp[i]
+        if (/\w/.test(c)) {
+            word += c
+        } else {
+            if (word) {
+                tokens.push(word)
+                word = ''
+            }
+            if (c.trim()) {
+                tokens.push(c)
+            }
+        }
+    }
+    if (word) {
+        tokens.push(word)
+    }
+    return tokens
 }

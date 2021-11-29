@@ -1,5 +1,5 @@
-import {OldTypeRegistry} from "../metadata"
-import * as metadataDefinition from "../metadata/definition"
+import {OldTypeRegistry} from "../metadata/old/typeRegistry"
+import * as metadataDefinition from "../metadata/old/definitions/metadata"
 import {Interfaces} from "../typegen/ifs"
 import {FileOutput} from "../util/out"
 

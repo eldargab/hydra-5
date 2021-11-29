@@ -1,4 +1,4 @@
-import type {OldTypes} from "../old/types"
+import type {OldTypes} from "../../types"
 import {Si1Variant} from "./base"
 
 export const V14: OldTypes['types'] = {

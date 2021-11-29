@@ -1,6 +1,6 @@
 import {xxhashAsU8a} from "@polkadot/util-crypto"
 import * as fs from "fs"
-import {createChainSpecFromMetadata, decodeMetadata} from "../metadata"
+import {getChainDescriptionFromMetadata, decodeMetadata} from "../metadata"
 import {ChainVersion} from "../metadata-explorer"
 import {RpcClient} from "../rpc/client"
 import {Codec} from "../scale"
@@ -20,7 +20,7 @@ async function main(): Promise<void> {
         let blockHash: string = await client.call('chain_getBlockHash', [version.blockNumber + 1])
         let encodedMetadata = await client.call('state_getMetadata', [blockHash])
         let metadata = decodeMetadata(encodedMetadata)
-        let spec = createChainSpecFromMetadata(metadata, {types: oldTypes})
+        let spec = getChainDescriptionFromMetadata(metadata, {types: oldTypes})
         let codec = new Codec(spec.types)
         console.log(`version: ${version.specVersion}, metadata: ${metadata.__kind}`)
 

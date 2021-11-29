@@ -1,4 +1,4 @@
-import type {OldTypes} from "../old/types"
+import type {OldTypes} from "../../types"
 import {ScaleInfoTypes} from "./base"
 import {V10} from "./v10"
 import {V11} from "./v11"
