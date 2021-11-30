@@ -1,4 +1,4 @@
-{
+export const types = {
   "GenericAccountId": "[u8; 32]",
   "GenericAccountIndex": "u32",
   "GenericConsensusEngineId": "[u8; 4]",
@@ -865,9 +865,6 @@
   },
   "ContractProject": "(ContractProjectInfo, ContractMetadata)",
   "ContractProjectContract": {
-    "_alias": {
-      "docs": "documentation"
-    },
     "name": "Text",
     "version": "Text",
     "authors": "Vec<Text>",
@@ -878,9 +875,6 @@
     "license": "Option<Text>"
   },
   "ContractProjectSource": {
-    "_alias": {
-      "wasmHash": "hash"
-    },
     "wasmHash": "[u8; 32]",
     "language": "Text",
     "compiler": "Text",
@@ -1164,10 +1158,6 @@
     "nonce": "H64"
   },
   "EthRichBlock": {
-    "_alias": {
-      "blockHash": "hash",
-      "blockSize": "size"
-    },
     "blockHash": "Option<H256>",
     "parentHash": "H256",
     "sha3Uncles": "H256",
@@ -1236,10 +1226,6 @@
     }
   },
   "EthRichHeader": {
-    "_alias": {
-      "blockHash": "hash",
-      "blockSize": "size"
-    },
     "blockHash": "Option<H256>",
     "parentHash": "H256",
     "sha3Uncles": "H256",
@@ -1705,415 +1691,6 @@
     "length": "BlockNumber",
     "delay": "BlockNumber",
     "repeat": "bool"
-  },
-  "ErrorMetadataV9": {
-    "name": "Text",
-    "docs": "Vec<Text>"
-  },
-  "EventMetadataV9": {
-    "name": "Text",
-    "args": "Vec<Type>",
-    "docs": "Vec<Text>"
-  },
-  "FunctionArgumentMetadataV9": {
-    "name": "Text",
-    "type": "Type"
-  },
-  "FunctionMetadataV9": {
-    "name": "Text",
-    "args": "Vec<FunctionArgumentMetadataV9>",
-    "docs": "Vec<Text>"
-  },
-  "MetadataV9": {
-    "modules": "Vec<ModuleMetadataV9>"
-  },
-  "ModuleConstantMetadataV9": {
-    "name": "Text",
-    "type": "Type",
-    "value": "Bytes",
-    "docs": "Vec<Text>"
-  },
-  "ModuleMetadataV9": {
-    "name": "Text",
-    "storage": "Option<StorageMetadataV9>",
-    "calls": "Option<Vec<FunctionMetadataV9>>",
-    "events": "Option<Vec<EventMetadataV9>>",
-    "constants": "Vec<ModuleConstantMetadataV9>",
-    "errors": "Vec<ErrorMetadataV9>"
-  },
-  "StorageEntryMetadataV9": {
-    "name": "Text",
-    "modifier": "StorageEntryModifierV9",
-    "type": "StorageEntryTypeV9",
-    "fallback": "Bytes",
-    "docs": "Vec<Text>"
-  },
-  "StorageEntryModifierV9": {
-    "_enum": [
-      "Optional",
-      "Default",
-      "Required"
-    ]
-  },
-  "StorageEntryTypeV9": {
-    "_enum": {
-      "Plain": "Type",
-      "Map": {
-        "hasher": "StorageHasherV9",
-        "key": "Type",
-        "value": "Type",
-        "linked": "bool"
-      },
-      "DoubleMap": {
-        "hasher": "StorageHasherV9",
-        "key1": "Type",
-        "key2": "Type",
-        "value": "Type",
-        "key2Hasher": "StorageHasherV9"
-      }
-    }
-  },
-  "StorageHasherV9": {
-    "_enum": {
-      "Blake2_128": null,
-      "Blake2_256": null,
-      "Twox128": null,
-      "Twox256": null,
-      "Twox64Concat": null
-    }
-  },
-  "StorageMetadataV9": {
-    "prefix": "Text",
-    "items": "Vec<StorageEntryMetadataV9>"
-  },
-  "ErrorMetadataV10": "ErrorMetadataV9",
-  "EventMetadataV10": "EventMetadataV9",
-  "FunctionArgumentMetadataV10": "FunctionArgumentMetadataV9",
-  "FunctionMetadataV10": "FunctionMetadataV9",
-  "MetadataV10": {
-    "modules": "Vec<ModuleMetadataV10>"
-  },
-  "ModuleConstantMetadataV10": "ModuleConstantMetadataV9",
-  "ModuleMetadataV10": {
-    "name": "Text",
-    "storage": "Option<StorageMetadataV10>",
-    "calls": "Option<Vec<FunctionMetadataV10>>",
-    "events": "Option<Vec<EventMetadataV10>>",
-    "constants": "Vec<ModuleConstantMetadataV10>",
-    "errors": "Vec<ErrorMetadataV10>"
-  },
-  "StorageEntryModifierV10": "StorageEntryModifierV9",
-  "StorageEntryMetadataV10": {
-    "name": "Text",
-    "modifier": "StorageEntryModifierV10",
-    "type": "StorageEntryTypeV10",
-    "fallback": "Bytes",
-    "docs": "Vec<Text>"
-  },
-  "StorageEntryTypeV10": {
-    "_enum": {
-      "Plain": "Type",
-      "Map": {
-        "hasher": "StorageHasherV10",
-        "key": "Type",
-        "value": "Type",
-        "linked": "bool"
-      },
-      "DoubleMap": {
-        "hasher": "StorageHasherV10",
-        "key1": "Type",
-        "key2": "Type",
-        "value": "Type",
-        "key2Hasher": "StorageHasherV10"
-      }
-    }
-  },
-  "StorageMetadataV10": {
-    "prefix": "Text",
-    "items": "Vec<StorageEntryMetadataV10>"
-  },
-  "StorageHasherV10": {
-    "_enum": {
-      "Blake2_128": null,
-      "Blake2_256": null,
-      "Blake2_128Concat": null,
-      "Twox128": null,
-      "Twox256": null,
-      "Twox64Concat": null
-    }
-  },
-  "ErrorMetadataV11": "ErrorMetadataV10",
-  "EventMetadataV11": "EventMetadataV10",
-  "ExtrinsicMetadataV11": {
-    "version": "u8",
-    "signedExtensions": "Vec<Text>"
-  },
-  "FunctionArgumentMetadataV11": "FunctionArgumentMetadataV10",
-  "FunctionMetadataV11": "FunctionMetadataV10",
-  "MetadataV11": {
-    "modules": "Vec<ModuleMetadataV11>",
-    "extrinsic": "ExtrinsicMetadataV11"
-  },
-  "ModuleConstantMetadataV11": "ModuleConstantMetadataV10",
-  "ModuleMetadataV11": {
-    "name": "Text",
-    "storage": "Option<StorageMetadataV11>",
-    "calls": "Option<Vec<FunctionMetadataV11>>",
-    "events": "Option<Vec<EventMetadataV11>>",
-    "constants": "Vec<ModuleConstantMetadataV11>",
-    "errors": "Vec<ErrorMetadataV11>"
-  },
-  "StorageEntryModifierV11": "StorageEntryModifierV10",
-  "StorageEntryMetadataV11": {
-    "name": "Text",
-    "modifier": "StorageEntryModifierV11",
-    "type": "StorageEntryTypeV11",
-    "fallback": "Bytes",
-    "docs": "Vec<Text>"
-  },
-  "StorageEntryTypeV11": {
-    "_enum": {
-      "Plain": "Type",
-      "Map": {
-        "hasher": "StorageHasherV11",
-        "key": "Type",
-        "value": "Type",
-        "linked": "bool"
-      },
-      "DoubleMap": {
-        "hasher": "StorageHasherV11",
-        "key1": "Type",
-        "key2": "Type",
-        "value": "Type",
-        "key2Hasher": "StorageHasherV11"
-      }
-    }
-  },
-  "StorageMetadataV11": {
-    "prefix": "Text",
-    "items": "Vec<StorageEntryMetadataV11>"
-  },
-  "StorageHasherV11": {
-    "_enum": {
-      "Blake2_128": null,
-      "Blake2_256": null,
-      "Blake2_128Concat": null,
-      "Twox128": null,
-      "Twox256": null,
-      "Twox64Concat": null,
-      "Identity": null
-    }
-  },
-  "ErrorMetadataV12": "ErrorMetadataV11",
-  "EventMetadataV12": "EventMetadataV11",
-  "ExtrinsicMetadataV12": "ExtrinsicMetadataV11",
-  "FunctionArgumentMetadataV12": "FunctionArgumentMetadataV11",
-  "FunctionMetadataV12": "FunctionMetadataV11",
-  "MetadataV12": {
-    "modules": "Vec<ModuleMetadataV12>",
-    "extrinsic": "ExtrinsicMetadataV12"
-  },
-  "ModuleConstantMetadataV12": "ModuleConstantMetadataV11",
-  "ModuleMetadataV12": {
-    "name": "Text",
-    "storage": "Option<StorageMetadataV12>",
-    "calls": "Option<Vec<FunctionMetadataV12>>",
-    "events": "Option<Vec<EventMetadataV12>>",
-    "constants": "Vec<ModuleConstantMetadataV12>",
-    "errors": "Vec<ErrorMetadataV12>",
-    "index": "u8"
-  },
-  "StorageEntryModifierV12": "StorageEntryModifierV11",
-  "StorageEntryMetadataV12": "StorageEntryMetadataV11",
-  "StorageEntryTypeV12": "StorageEntryTypeV11",
-  "StorageMetadataV12": "StorageMetadataV11",
-  "StorageHasherV12": "StorageHasherV11",
-  "ErrorMetadataV13": "ErrorMetadataV12",
-  "EventMetadataV13": "EventMetadataV12",
-  "ExtrinsicMetadataV13": "ExtrinsicMetadataV12",
-  "FunctionArgumentMetadataV13": "FunctionArgumentMetadataV12",
-  "FunctionMetadataV13": "FunctionMetadataV12",
-  "MetadataV13": {
-    "modules": "Vec<ModuleMetadataV13>",
-    "extrinsic": "ExtrinsicMetadataV13"
-  },
-  "ModuleConstantMetadataV13": "ModuleConstantMetadataV12",
-  "ModuleMetadataV13": {
-    "name": "Text",
-    "storage": "Option<StorageMetadataV13>",
-    "calls": "Option<Vec<FunctionMetadataV13>>",
-    "events": "Option<Vec<EventMetadataV13>>",
-    "constants": "Vec<ModuleConstantMetadataV13>",
-    "errors": "Vec<ErrorMetadataV13>",
-    "index": "u8"
-  },
-  "StorageEntryModifierV13": "StorageEntryModifierV12",
-  "StorageEntryMetadataV13": {
-    "name": "Text",
-    "modifier": "StorageEntryModifierV13",
-    "type": "StorageEntryTypeV13",
-    "fallback": "Bytes",
-    "docs": "Vec<Text>"
-  },
-  "StorageEntryTypeV13": {
-    "_enum": {
-      "Plain": "Type",
-      "Map": {
-        "hasher": "StorageHasherV13",
-        "key": "Type",
-        "value": "Type",
-        "linked": "bool"
-      },
-      "DoubleMap": {
-        "hasher": "StorageHasherV13",
-        "key1": "Type",
-        "key2": "Type",
-        "value": "Type",
-        "key2Hasher": "StorageHasherV13"
-      },
-      "NMap": {
-        "keyVec": "Vec<Type>",
-        "hashers": "Vec<StorageHasherV13>",
-        "value": "Type"
-      }
-    }
-  },
-  "StorageMetadataV13": {
-    "prefix": "Text",
-    "items": "Vec<StorageEntryMetadataV13>"
-  },
-  "StorageHasherV13": "StorageHasherV12",
-  "PortableRegistryV14": "GenericPortableRegistry",
-  "PortableTypeV14": {
-    "id": "Si1LookupTypeId",
-    "type": "Si1Type"
-  },
-  "ErrorMetadataV14": {
-    "name": "Text",
-    "fields": "Vec<Si1Field>",
-    "index": "u8",
-    "docs": "Vec<Text>",
-    "args": "Vec<Type>"
-  },
-  "EventMetadataV14": {
-    "name": "Text",
-    "fields": "Vec<Si1Field>",
-    "index": "u8",
-    "docs": "Vec<Text>",
-    "args": "Vec<Type>"
-  },
-  "FunctionArgumentMetadataV14": {
-    "name": "Text",
-    "type": "Type",
-    "typeName": "Option<Type>"
-  },
-  "FunctionMetadataV14": {
-    "name": "Text",
-    "fields": "Vec<Si1Field>",
-    "index": "u8",
-    "docs": "Vec<Text>",
-    "args": "Vec<FunctionArgumentMetadataV14>"
-  },
-  "ExtrinsicMetadataV14": {
-    "type": "SiLookupTypeId",
-    "version": "u8",
-    "signedExtensions": "Vec<SignedExtensionMetadataV14>"
-  },
-  "MetadataV14": {
-    "lookup": "PortableRegistry",
-    "pallets": "Vec<PalletMetadataV14>",
-    "extrinsic": "ExtrinsicMetadataV14",
-    "type": "SiLookupTypeId"
-  },
-  "PalletCallMetadataV14": {
-    "type": "SiLookupTypeId"
-  },
-  "PalletConstantMetadataV14": {
-    "name": "Text",
-    "type": "SiLookupTypeId",
-    "value": "Bytes",
-    "docs": "Vec<Text>"
-  },
-  "PalletErrorMetadataV14": {
-    "type": "SiLookupTypeId"
-  },
-  "PalletEventMetadataV14": {
-    "type": "SiLookupTypeId"
-  },
-  "PalletMetadataV14": {
-    "name": "Text",
-    "storage": "Option<PalletStorageMetadataV14>",
-    "calls": "Option<PalletCallMetadataV14>",
-    "events": "Option<PalletEventMetadataV14>",
-    "constants": "Vec<PalletConstantMetadataV14>",
-    "errors": "Option<PalletErrorMetadataV14>",
-    "index": "u8"
-  },
-  "PalletStorageMetadataV14": {
-    "prefix": "Text",
-    "items": "Vec<StorageEntryMetadataV14>"
-  },
-  "SignedExtensionMetadataV14": {
-    "identifier": "Text",
-    "type": "SiLookupTypeId",
-    "additionalSigned": "SiLookupTypeId"
-  },
-  "StorageEntryMetadataV14": {
-    "name": "Text",
-    "modifier": "StorageEntryModifierV14",
-    "type": "StorageEntryTypeV14",
-    "fallback": "Bytes",
-    "docs": "Vec<Text>"
-  },
-  "StorageEntryModifierV14": "StorageEntryModifierV13",
-  "StorageEntryTypeV14": {
-    "_enum": {
-      "Plain": "SiLookupTypeId",
-      "Map": {
-        "hashers": "Vec<StorageHasherV14>",
-        "key": "SiLookupTypeId",
-        "value": "SiLookupTypeId"
-      }
-    }
-  },
-  "StorageHasherV14": "StorageHasherV13",
-  "PortableRegistry": "PortableRegistryV14",
-  "PortableType": "PortableTypeV14",
-  "ErrorMetadataLatest": "ErrorMetadataV14",
-  "EventMetadataLatest": "EventMetadataV14",
-  "ExtrinsicMetadataLatest": "ExtrinsicMetadataV14",
-  "FunctionArgumentMetadataLatest": "FunctionArgumentMetadataV14",
-  "FunctionMetadataLatest": "FunctionMetadataV14",
-  "MetadataLatest": "MetadataV14",
-  "PalletCallMetadataLatest": "PalletCallMetadataV14",
-  "PalletConstantMetadataLatest": "PalletConstantMetadataV14",
-  "PalletErrorMetadataLatest": "PalletErrorMetadataV14",
-  "PalletEventMetadataLatest": "PalletEventMetadataV14",
-  "PalletMetadataLatest": "PalletMetadataV14",
-  "PalletStorageMetadataLatest": "PalletStorageMetadataV14",
-  "SignedExtensionMetadataLatest": "SignedExtensionMetadataV14",
-  "StorageEntryMetadataLatest": "StorageEntryMetadataV14",
-  "StorageEntryModifierLatest": "StorageEntryModifierV14",
-  "StorageEntryTypeLatest": "StorageEntryTypeV14",
-  "StorageHasher": "StorageHasherV14",
-  "MetadataAll": {
-    "_enum": {
-      "V0": "DoNotConstruct<MetadataV0>",
-      "V1": "DoNotConstruct<MetadataV1>",
-      "V2": "DoNotConstruct<MetadataV2>",
-      "V3": "DoNotConstruct<MetadataV3>",
-      "V4": "DoNotConstruct<MetadataV4>",
-      "V5": "DoNotConstruct<MetadataV5>",
-      "V6": "DoNotConstruct<MetadataV6>",
-      "V7": "DoNotConstruct<MetadataV7>",
-      "V8": "DoNotConstruct<MetadataV8>",
-      "V9": "MetadataV9",
-      "V10": "MetadataV10",
-      "V11": "MetadataV11",
-      "V12": "MetadataV12",
-      "V13": "MetadataV13",
-      "V14": "MetadataV14"
-    }
   },
   "MmrLeafProof": {
     "blockHash": "BlockHash",
@@ -2867,9 +2444,6 @@
   },
   "TransactionPriority": "u64",
   "TransactionInfo": {
-    "_alias": {
-      "dataSize": "size"
-    },
     "chunkRoot": "H256",
     "contentHash": "H256",
     "dataSize": "u32",
@@ -3635,10 +3209,6 @@
     "listening": "PeerEndpointAddr"
   },
   "PeerEndpointAddr": {
-    "_alias": {
-      "localAddr": "local_addr",
-      "sendBackAddr": "send_back_addr"
-    },
     "localAddr": "Text",
     "sendBackAddr": "Text"
   },

@@ -1,4 +1,4 @@
-import * as types from "@polkadot/types/interfaces/definitions"
+import * as definitions from "@polkadot/types/interfaces/definitions"
 import * as fs from "fs"
 
 let all: Record<string, any> = {
@@ -28,8 +28,22 @@ let all: Record<string, any> = {
     }
 }
 
-for (let key in types) {
-    Object.assign(all, (types as any)[key].types)
+let modules: any = definitions
+
+for (let name in modules) {
+    if (name == 'metadata') continue
+    let types = modules[name]?.types
+    for (let key in types) {
+        let def = types[key]
+        if (def && typeof def == 'object') {
+            let {_alias, ...rest} = def
+            def = rest
+        }
+        all[key] = def
+    }
 }
 
-fs.writeFileSync('types.json', JSON.stringify(all, null, 2))
+fs.writeFileSync(
+    'src/metadata/old/definitions/substrate.ts',
+    'export const types = ' + JSON.stringify(all, null, 2)
+)

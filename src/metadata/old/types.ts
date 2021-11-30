@@ -4,7 +4,9 @@ export type OldTypeDefinition = OldTypeExp | OldEnumDefinition | OldStructDefini
 export type OldTypeExp = string
 
 
-export interface OldStructDefinition extends Record<string, OldTypeExp> {}
+export interface OldStructDefinition {
+    [typeName: string]: OldTypeExp
+}
 
 
 export interface OldEnumDefinition {
@@ -23,7 +25,7 @@ export interface OldSetDefinition {
 
 export interface OldTypesAlias {
     [pallet: string]: {
-        [name: string]: OldTypeExp
+        [typeName: string]: OldTypeExp
     }
 }
 
@@ -31,4 +33,18 @@ export interface OldTypesAlias {
 export interface OldTypes {
     types: Record<string, OldTypeDefinition>
     typesAlias?: OldTypesAlias
+}
+
+
+export type SpecVersion = number
+export type SpecVersionRange = [minInclusive: SpecVersion | null, maxInclusive: SpecVersion | null]
+
+
+export interface OldTypesWithSpecVersionRange extends OldTypes {
+    minmax: SpecVersionRange
+}
+
+
+export interface OldTypesBundle extends OldTypes {
+    overrides: OldTypesWithSpecVersionRange[]
 }
