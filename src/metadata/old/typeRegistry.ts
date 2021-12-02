@@ -1,4 +1,5 @@
 import assert from "assert"
+import {getCamelCase} from "../../util/naming"
 import {assertNotNull, unexpectedCase} from "../../util/util"
 import {Field, Primitive, Ti, Type, TypeKind, TypeRegistry, Variant} from "../types"
 import {normalizeByteSequences} from "../util"
@@ -25,8 +26,15 @@ export class OldTypeRegistry {
         return ti
     }
 
-    use(typeExp: OldTypeExp | texp.Type): Ti {
+    use(typeExp: OldTypeExp | texp.Type, pallet?: string): Ti {
         let type = typeof typeExp == 'string' ? texp.parse(typeExp) : typeExp
+        if (pallet != null && type.kind == 'named') {
+            let section = getCamelCase(pallet)
+            let alias = this.oldTypes.typesAlias?.[section]?.[type.name]
+            if (alias) {
+                type = {kind: 'named', name: alias, params: []}
+            }
+        }
         let key = texp.print(type)
         let ti = this.lookup.get(key)
         if (ti == null) {

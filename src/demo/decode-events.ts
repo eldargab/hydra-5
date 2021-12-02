@@ -1,32 +1,36 @@
 import {xxhashAsU8a} from "@polkadot/util-crypto"
 import * as fs from "fs"
-import {getChainDescriptionFromMetadata, decodeMetadata} from "../metadata"
+import {kusamaBundle} from "../chains/kusama"
+import {decodeMetadata, getChainDescriptionFromMetadata} from "../metadata"
 import {ChainVersion} from "../metadata-explorer"
+import {getTypesFromBundle} from "../metadata/old/typesBundle"
 import {RpcClient} from "../rpc/client"
 import {Codec} from "../scale"
-import {readJson} from "../util/util"
 
 
 async function main(): Promise<void> {
     let versions: ChainVersion[] = JSON.parse(fs.readFileSync('chainVersions.json', 'utf-8'))
-    let oldTypes = readJson('types.json')
     let client = new RpcClient('wss://kusama-rpc.polkadot.io/')
 
     versions.sort((a, b) => a.blockNumber - b.blockNumber)
 
-    for (let i = 50; i < versions.length; i++) {
+    for (let i = 0; i < versions.length; i++) {
         let version = versions[i]
 
         let blockHash: string = await client.call('chain_getBlockHash', [version.blockNumber + 1])
         let encodedMetadata = await client.call('state_getMetadata', [blockHash])
         let metadata = decodeMetadata(encodedMetadata)
-        let spec = getChainDescriptionFromMetadata(metadata, {types: oldTypes})
+        let spec = getChainDescriptionFromMetadata(
+            metadata,
+            getTypesFromBundle(kusamaBundle, version.specVersion)
+        )
         let codec = new Codec(spec.types)
         console.log(`version: ${version.specVersion}, metadata: ${metadata.__kind}`)
 
-        for (let j = version.blockNumber + 1; j < Math.min(version.blockNumber + 20, versions[i+1]?.blockNumber ?? Infinity); j++) {
+        for (let j = version.blockNumber + 1; j < Math.min(version.blockNumber + 10, versions[i+1]?.blockNumber ?? Infinity); j++) {
             console.log(`block: #${j}`)
-            let encodedEvents = await getEvents(client, blockHash)
+            let hash = await client.call('chain_getBlockHash', [j])
+            let encodedEvents = await getEvents(client, hash)
             let events = codec.decodeBinary(spec.eventRecordList, encodedEvents)
             console.log(`events: ${events.length}`)
         }

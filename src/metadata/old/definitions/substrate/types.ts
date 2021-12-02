@@ -1,6 +1,7 @@
 export const types = {
   "GenericAccountId": "[u8; 32]",
   "GenericAccountIndex": "u32",
+  "GenericLookupSource": "DoNotConstruct",
   "GenericConsensusEngineId": "[u8; 4]",
   "GenericMultiAddress": {
     "_enum": {

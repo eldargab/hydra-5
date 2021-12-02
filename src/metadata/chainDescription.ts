@@ -143,7 +143,7 @@ class FromOld {
                     name: palletName,
                     index,
                     fields: [
-                        {type: assertNotNull(this.makeCallEnum(calls))}
+                        {type: assertNotNull(this.makeCallEnum(palletName, calls))}
                     ]
                 })
             })
@@ -163,7 +163,7 @@ class FromOld {
                     name: palletName,
                     index,
                     fields: [
-                        {type: assertNotNull(this.makeEventEnum(events))}
+                        {type: assertNotNull(this.makeEventEnum(palletName, events))}
                     ]
                 })
             })
@@ -174,12 +174,12 @@ class FromOld {
         })
     }
 
-    private makeEventEnum(events?: EventMetadataV9[]): Ti | undefined {
+    private makeEventEnum(palletName: string, events?: EventMetadataV9[]): Ti | undefined {
         if (!events?.length) return undefined
         let variants = events.map((e, index) => {
             let fields = e.args.map(arg => {
                 return {
-                    type: this.registry.use(arg)
+                    type: this.registry.use(arg, palletName)
                 }
             })
             return {
@@ -195,13 +195,13 @@ class FromOld {
         })
     }
 
-    private makeCallEnum(calls?: FunctionMetadataV9[]): Ti | undefined {
+    private makeCallEnum(palletName: string, calls?: FunctionMetadataV9[]): Ti | undefined {
         if (!calls?.length) return undefined
         let variants = calls.map((call, index) => {
             let fields = call.args.map(arg => {
                 return {
                     name: arg.name,
-                    type: this.registry.use(arg.type)
+                    type: this.registry.use(arg.type, palletName)
                 }
             })
             return {

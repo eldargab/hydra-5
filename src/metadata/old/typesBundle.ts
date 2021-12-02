@@ -1,5 +1,5 @@
 import {types as metadataDefinitions} from "./definitions/metadata"
-import {types as substrateDefinitions} from "./definitions/substrate"
+import {substrateBundle} from "./definitions/substrate"
 import type {OldTypes, OldTypesBundle, SpecVersion, SpecVersionRange} from "./types"
 
 
@@ -7,24 +7,22 @@ export function getTypesFromBundle(bundle: OldTypesBundle, specVersion: SpecVers
     let types: OldTypes = {
         types: {
             ...metadataDefinitions as any,
-            ...substrateDefinitions as any,
+            ...substrateBundle.types,
             ...bundle.types
+        },
+        typesAlias: {
+            ...substrateBundle.typesAlias,
+            ...bundle.typesAlias
         }
     }
 
-    if (bundle.typesAlias) {
-        types.typesAlias = bundle.typesAlias
-    }
+    if (!bundle.versions?.length) return types
 
-    if (!bundle.overrides?.length) return types
-
-    for (let i = 0; i < bundle.overrides.length; i++) {
-        let override = bundle.overrides[i]
+    for (let i = 0; i < bundle.versions.length; i++) {
+        let override = bundle.versions[i]
         if (isWithinRange(override.minmax, specVersion)) {
             Object.assign(types.types, override.types)
-            if (override.typesAlias) {
-                types.typesAlias = {...types.typesAlias, ...override.typesAlias}
-            }
+            Object.assign(types.typesAlias, override.typesAlias)
         }
     }
 

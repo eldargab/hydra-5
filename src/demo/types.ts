@@ -4,6 +4,7 @@ import * as fs from "fs"
 let all: Record<string, any> = {
     GenericAccountId: '[u8; 32]',
     GenericAccountIndex: 'u32',
+    GenericLookupSource: 'DoNotConstruct',
     GenericConsensusEngineId: '[u8; 4]',
     GenericMultiAddress: {
         _enum: {
@@ -44,6 +45,6 @@ for (let name in modules) {
 }
 
 fs.writeFileSync(
-    'src/metadata/old/definitions/substrate.ts',
+    'src/metadata/old/definitions/substrate/types.ts',
     'export const types = ' + JSON.stringify(all, null, 2)
 )

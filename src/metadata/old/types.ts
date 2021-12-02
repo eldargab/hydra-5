@@ -25,7 +25,7 @@ export interface OldSetDefinition {
 
 export interface OldTypesAlias {
     [pallet: string]: {
-        [typeName: string]: OldTypeExp
+        [typeName: string]: string
     }
 }
 
@@ -46,5 +46,5 @@ export interface OldTypesWithSpecVersionRange extends OldTypes {
 
 
 export interface OldTypesBundle extends OldTypes {
-    overrides: OldTypesWithSpecVersionRange[]
+    versions?: OldTypesWithSpecVersionRange[]
 }
