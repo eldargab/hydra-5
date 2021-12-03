@@ -1,13 +1,13 @@
-import {sanitize} from "./sanitizeHack"
-
-
 export type Type = NamedType | ArrayType | TupleType
+
+
+type TypeParameter = Type |  number
 
 
 export interface NamedType {
     kind: 'named'
     name: string
-    params: (Type | number)[]
+    params: TypeParameter[]
 }
 
 
@@ -51,7 +51,7 @@ class TypeExpParser {
     private idx = 0
 
     constructor(private typeExp: string) {
-        this.tokens = tokenize(sanitize(typeExp))
+        this.tokens = tokenize(typeExp)
     }
 
     private eof(): boolean {
@@ -135,20 +135,64 @@ class TypeExpParser {
     }
 
     private namedType(): NamedType | null {
-        let name = this.name()
-        if (name == null) return null
-        let params: (Type | number)[] = []
+        let name: string
+        let trait: string | undefined
+        let item: string | undefined
         if (this.tok('<')) {
-            params = this.list(',', () => this.anyType() || this.nat())
+            name = this.assertNamedType().name
+            this.assertTok('as')
+            trait = this.assertNamedType().name
             this.assertTok('>')
+        } else {
+            let nameTok = this.name()
+            if (nameTok == null) return null
+            name = nameTok
+        }
+        if (this.tok('::')) {
+            item = this.assertName()
+        }
+        if (name == 'InherentOfflineReport' && name == trait && item == 'Inherent') {
+        } else if (name == 'exec' && item == 'StorageKey') {
+            name = 'ContractStorageKey'
+        } else if (name == 'Lookup' && item == 'Source') {
+            name = 'LookupSource'
+        } else if (name == 'Lookup' && item == 'Target') {
+            name = 'LookupTarget'
+        } else if (item) {
+            this.assert(trait != 'HasCompact')
+            name = item
+        } else if (trait == 'HasCompact') {
+            return {
+                kind: 'named',
+                name: 'Compact',
+                params: [{
+                    kind: 'named',
+                    name,
+                    params: this.typeParameters()
+                }]
+            }
         }
         return {
             kind: 'named',
             name,
-            params
+            params: this.typeParameters()
         }
     }
 
+    private assertNamedType(): NamedType {
+        return this.assert(this.namedType())
+    }
+
+    private typeParameters(): TypeParameter[] {
+        let params: TypeParameter[]
+        if (this.tok('<')) {
+            params = this.list(',', () => this.nat() || this.anyType())
+            this.assertTok('>')
+        } else {
+            params = []
+        }
+        return params
+    }
 
     private anyType(): Type | null {
         return this.tuple() || this.array() || this.namedType()
@@ -167,7 +211,7 @@ class TypeExpParser {
     }
 
     private assert<T>(val: T | null): T {
-        if (val == null) {
+        if (val == null || (val as any) === false) {
             throw this.abort()
         } else {
             return val
@@ -188,7 +232,11 @@ function tokenize(typeExp: string): string[] {
                 tokens.push(word)
                 word = ''
             }
-            if (c.trim()) {
+            c = c.trim()
+            if (c == ':' && typeExp[i+1] == ':') {
+                i += 1
+                tokens.push('::')
+            } else if (c) {
                 tokens.push(c)
             }
         }

@@ -84,7 +84,12 @@ export class OldTypeRegistry {
                 }
             case 'UInt':
                 return convertGenericIntegerToPrimitive('U', type)
-            case 'Vec': {
+            case 'Box':
+                return this.use(assertOneParam(type))
+            case 'Vec':
+            case 'VecDeque':
+            case 'WeakVec':
+            case 'BoundedVec': {
                 let param = this.use(assertOneParam(type))
                 return {
                     kind: TypeKind.Sequence,
@@ -141,6 +146,15 @@ export class OldTypeRegistry {
                 return {
                     kind: TypeKind.Compact,
                     type: param
+                }
+            }
+            case 'RawAddress':
+                return this.use('Address')
+            case 'PairOf': {
+                let param = this.use(assertOneParam(type))
+                return {
+                    kind: TypeKind.Tuple,
+                    tuple: [param, param]
                 }
             }
         }
@@ -261,7 +275,7 @@ export class OldTypeRegistry {
 
 
 function assertOneParam(type: texp.NamedType): texp.Type {
-    if (type.params.length != 1) {
+    if (type.params.length == 0) {
         throw new Error(`Invalid type ${texp.print(type)}: one type parameter expected`)
     }
     let param = type.params[0]

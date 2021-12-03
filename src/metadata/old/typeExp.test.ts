@@ -2,90 +2,92 @@ import expect from "expect"
 import {parse, print, Type} from "./typeExp"
 
 describe('Type expressions', function () {
-    describe('TypeExpParser', function () {
-        function test(exp: string, type: Type): void {
-            it(exp, () => {
-                let parsed = parse(exp)
-                expect(parsed).toEqual(type)
-            })
-        }
+    function ast(exp: string, type: Type): void {
+        it('AST: ' + exp, () => {
+            let parsed = parse(exp)
+            expect(parsed).toEqual(type)
+        })
+    }
 
-        test('A', {
+    function test(exp: string, result?: string): void {
+        it(result ? exp + ' -> ' + result : exp, () => {
+            let type = parse(exp)
+            let printed = print(type)
+            expect(printed).toEqual(result || exp)
+        })
+    }
+
+    ast('A', {
+        kind: 'named',
+        name: 'A',
+        params: []
+    })
+
+    ast('Vec<u8>', {
+        kind: 'named',
+        name: 'Vec',
+        params: [{
+            kind: 'named',
+            name: 'u8',
+            params: []
+        }]
+    })
+
+    ast('[A; 10]', {
+        kind: 'array',
+        item: {
             kind: 'named',
             name: 'A',
             params: []
-        })
+        },
+        len: 10
+    })
 
-        // test('Vec<u8>', {
-        //     kind: 'named',
-        //     name: 'Vec',
-        //     params: [{
-        //         kind: 'named',
-        //         name: 'u8',
-        //         params: []
-        //     }]
-        // })
+    ast('[u8; 16; H128]', {
+        kind: 'array',
+        item: {
+            kind: 'named',
+            name: 'u8',
+            params: []
+        },
+        len: 16
+    })
 
-        test('[A; 10]', {
-            kind: 'array',
-            item: {
+    ast('(A, B, [u8; 5])', {
+        kind: 'tuple',
+        params: [
+            {
                 kind: 'named',
                 name: 'A',
                 params: []
             },
-            len: 10
-        })
-
-        test('[u8; 16; H128]', {
-            kind: 'array',
-            item: {
+            {
                 kind: 'named',
-                name: 'u8',
+                name: 'B',
                 params: []
             },
-            len: 16
-        })
-
-        test('(A, B, [u8; 5])', {
-            kind: 'tuple',
-            params: [
-                {
+            {
+                kind: 'array',
+                item: {
                     kind: 'named',
-                    name: 'A',
+                    name: 'u8',
                     params: []
                 },
-                {
-                    kind: 'named',
-                    name: 'B',
-                    params: []
-                },
-                {
-                    kind: 'array',
-                    item: {
-                        kind: 'named',
-                        name: 'u8',
-                        params: []
-                    },
-                    len: 5
-                }
-            ]
-        })
+                len: 5
+            }
+        ]
     })
 
-    describe('print(parse(exp)) == exp', function () {
-        function test(exp: string): void {
-            it(exp, () => {
-                let type = parse(exp)
-                let printed = print(type)
-                expect(printed).toEqual(exp)
-            })
-        }
+    test('A')
+    test('Vec<u8>')
+    test('[A; 20]')
+    test('(A, B, C, [Foo; 5])')
+    test('Vec<(NominatorIndex, [CompactScore; 0], ValidatorIndex)>')
+    test('Result<(), DispatchError>')
 
-        test('A')
-        // test('Vec<u8>')
-        test('[A; 20]')
-        test('(A, B, C, [Foo; 5])')
-    })
+    test('<T::InherentOfflineReport as InherentOfflineReport>::Inherent', 'InherentOfflineReport')
+    test('<T::Balance as HasCompact>', 'Compact<Balance>')
+    test('<T as Trait<I>>::Proposal', 'Proposal')
 })
 
 
