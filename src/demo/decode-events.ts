@@ -2,24 +2,21 @@ import {xxhashAsU8a} from "@polkadot/util-crypto"
 import * as fs from "fs"
 import {kusamaBundle} from "../chains/kusama"
 import {decodeMetadata, getChainDescriptionFromMetadata} from "../metadata"
-import {ChainVersion} from "../metadata-explorer"
+import type {ChainVersion} from "../metadata-explorer"
 import {getTypesFromBundle} from "../metadata/old/typesBundle"
 import {RpcClient} from "../rpc/client"
 import {Codec} from "../scale"
 
 
 async function main(): Promise<void> {
-    let versions: ChainVersion[] = JSON.parse(fs.readFileSync('chainVersions.json', 'utf-8'))
+    let versions: ChainVersion[] = JSON.parse(fs.readFileSync('kusamaChainVersions.json', 'utf-8'))
     let client = new RpcClient('wss://kusama-rpc.polkadot.io/')
 
     versions.sort((a, b) => a.blockNumber - b.blockNumber)
 
     for (let i = 0; i < versions.length; i++) {
         let version = versions[i]
-
-        let blockHash: string = await client.call('chain_getBlockHash', [version.blockNumber + 1])
-        let encodedMetadata = await client.call('state_getMetadata', [blockHash])
-        let metadata = decodeMetadata(encodedMetadata)
+        let metadata = decodeMetadata(version.metadata)
         let spec = getChainDescriptionFromMetadata(
             metadata,
             getTypesFromBundle(kusamaBundle, version.specVersion)

@@ -13,12 +13,15 @@ export function decodeMetadata(data: string | Uint8Array): Metadata {
         data = Buffer.from(data.slice(2), 'hex')
     }
     let src = new Src(data)
+
     let magic = src.u32()
     assert(magic === 0x6174656d, 'No magic number 0x6174656d at the start of data')
+
     let version = src.u8()
     assert(9 <= version && version < 15, 'Invalid metadata version')
+
     // See https://github.com/polkadot-js/api/commit/a9211690be6b68ad6c6dad7852f1665cadcfa5b2
-    // for why try/catch/versions stiff
+    // for why try-catch and version decoding stuff is here
     try {
         return decode(version, src)
     } catch(e: any) {

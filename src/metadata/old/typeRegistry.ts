@@ -144,10 +144,6 @@ export class OldTypeRegistry {
                 }
             }
         }
-        if (type.params.length > 0) {
-            // Following polkadot.js we ignore all type parameters which we don't understand
-            return this.use(type.name)
-        }
         let def = this.oldTypes.types[type.name]
         if (def == null) {
             throw new Error(`Type ${type.name} is not defined`)
