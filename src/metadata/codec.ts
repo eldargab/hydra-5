@@ -55,7 +55,7 @@ function createScaleCodec(): {codec: Codec, versions: Ti[]} {
         versions[i-9] = registry.use(`MetadataV${i}`)
     }
     return {
-        codec: new Codec(registry.getTypeRegistry()),
+        codec: new Codec(registry.getTypes()),
         versions
     }
 }

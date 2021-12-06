@@ -35,9 +35,9 @@ export interface SubstrateBlock {
     extrinsicsRoot: string
 
     /**
-     * Raw JSON with substrate runtime version
+     * Substrate runtime version
      */
-    runtimeVersion: unknown
+    runtimeVersion: RuntimeVersion
 
     /**
      * Raw JSON with last runtime upgrade information
@@ -53,6 +53,16 @@ export interface SubstrateBlock {
      * An array with basic extrinsic information
      */
     extrinsics: ExtrinsicInfo[]
+}
+
+
+export interface RuntimeVersion {
+    authoringVersion: number
+    implName: string
+    implVersion: number
+    specName: string
+    specVersion: number
+    transactionVersion: number
 }
 
 

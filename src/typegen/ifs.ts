@@ -1,5 +1,5 @@
 import assert from "assert"
-import {CompactType, CompositeType, Field, Primitive, Ti, TypeKind, TypeRegistry, VariantType} from "../metadata"
+import {CompactType, CompositeType, Field, Primitive, Ti, Type, TypeKind, VariantType} from "../metadata"
 import {getCamelCase} from "../util/naming"
 import {Output} from "../util/out"
 import {assertNotNull, unexpectedCase} from "../util/util"
@@ -8,12 +8,14 @@ import {assignNames, needsName} from "./names"
 
 export class Interfaces {
     private nameAssignment: Map<Ti, string>
+    private assignedNames: Set<string>
     private generated: (string | undefined)[]
     private generatedNames = new Set<string>()
     private queue: ((out: Output) => void)[] = []
 
-    constructor(private types: TypeRegistry) {
+    constructor(private types: Type[]) {
         this.nameAssignment = assignNames(types)
+        this.assignedNames = new Set(this.nameAssignment.values())
         this.generated = new Array(types.length)
     }
 
@@ -87,7 +89,7 @@ export class Interfaces {
         }
     }
 
-    private makeTuple(fields: Ti[]): string {
+    makeTuple(fields: Ti[]): string {
         switch(fields.length) {
             case 0:
                 return 'null'
@@ -153,10 +155,26 @@ export class Interfaces {
         return assertNotNull(this.nameAssignment.get(ti))
     }
 
+    isEmpty(): boolean {
+        return this.queue.length == 0
+    }
+
     generate(out: Output): void {
         for (let i = 0; i < this.queue.length; i++) {
             this.queue[i](out)
         }
+    }
+
+    qualify(ns: string, typeExp: string): string {
+        let names = typeExp
+            .split(/[<>&|,()\[\]]/)
+            .map((t) => t.trim())
+            .filter((t) => !!t)
+        let local = new Set(names.filter(name => this.assignedNames.has(name)))
+        local.forEach(name => {
+            typeExp = typeExp.replace(new RegExp(`\\b${name}\\b`, 'g'), ns + '.' + name)
+        })
+        return typeExp
     }
 }
 

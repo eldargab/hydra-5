@@ -1,5 +1,5 @@
 import type {EntityManager} from "typeorm"
-import type {MetadataRegistry} from "../../old/metadata-old/metadataRegistry"
+import type {ChainDescription} from "../../metadata"
 import type {SubstrateBlock, SubstrateEvent} from "./substrate"
 
 
@@ -7,7 +7,7 @@ export interface Store extends EntityManager {}
 
 
 export interface EventHandlerContext {
-    metadataRegistry: MetadataRegistry
+    chainDescription: ChainDescription
     store: Store
     block: SubstrateBlock
     event: SubstrateEvent
@@ -20,7 +20,7 @@ export interface EventHandler {
 
 
 export interface BlockHandlerContext {
-    metadataRegistry: MetadataRegistry
+    chainDescription: ChainDescription
     store: Store
     block: SubstrateBlock
     events: SubstrateEvent[]

@@ -1,9 +1,9 @@
-import {getTypeHash, Ti, Type, TypeKind, TypeRegistry} from "../metadata"
+import {getTypeHash, Ti, Type, TypeKind} from "../metadata"
 
 /**
  * Assign names to types
  */
-export function assignNames(types: TypeRegistry): Map<Ti, string> {
+export function assignNames(types: Type[]): Map<Ti, string> {
     let assignment = new Map<number, string>()
 
     getNames(types).forEach((tis, name) => {
@@ -46,7 +46,7 @@ export function assignNames(types: TypeRegistry): Map<Ti, string> {
 /**
  * Compute a mapping between a name and actual types which want to have it
  */
-function getNames(types: TypeRegistry): Map<string, Ti[]> {
+function getNames(types: Type[]): Map<string, Ti[]> {
     let names = new Map<string, Ti[]>()
 
     types.forEach((type, ti) => {

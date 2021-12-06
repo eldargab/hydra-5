@@ -1,9 +1,8 @@
-import {QualifiedName} from "../old/metadata-old/base"
 import {Heap} from "../util/heap"
 import {Range, rangeDifference, rangeIntersection} from "../util/range"
 import {assertNotNull} from "../util/util"
 import {BlockHandler, EventHandler} from "./interfaces/handlerContext"
-import {Hooks} from "./interfaces/hooks"
+import {Hooks, QualifiedName} from "./interfaces/hooks"
 
 
 export interface Batch {

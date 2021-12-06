@@ -3,12 +3,12 @@ import {assertNotNull, def} from "../util/util"
 import type {EventMetadataV9, FunctionMetadataV9, Metadata, MetadataV14} from "./interfaces"
 import {OldTypeRegistry} from "./old/typeRegistry"
 import {OldTypes} from "./old/types"
-import {Ti, TypeKind, TypeRegistry, Variant} from "./types"
+import {Ti, Type, TypeKind, Variant} from "./types"
 import {getTypeByPath, normalizeByteSequences} from "./util"
 
 
 export interface ChainDescription {
-    types: TypeRegistry
+    types: Type[]
     call: Ti
     event: Ti
     eventRecord: Ti
@@ -34,7 +34,7 @@ export function getChainDescriptionFromMetadata(metadata: Metadata, oldTypes?: O
 
 
 function fromV14(metadata: MetadataV14): ChainDescription {
-    let types: TypeRegistry = metadata.lookup.types.map(t => {
+    let types: Type[] = metadata.lookup.types.map(t => {
         let info = {
             path: t.type.path,
             docs: t.type.docs
@@ -105,10 +105,19 @@ function fromV14(metadata: MetadataV14): ChainDescription {
     return {
         types,
         call: -1,
-        event: -1,
+        event: getEventTypeFromEventRecord(types, eventRecord),
         eventRecord,
         eventRecordList
     }
+}
+
+
+function getEventTypeFromEventRecord(types: Type[], eventRecord: Ti): Ti {
+    let rec = types[eventRecord]
+    assert(rec.kind == TypeKind.Composite)
+    let eventField = rec.fields.find(f => f.name == 'event')
+    assert(eventField != null)
+    return eventField.type
 }
 
 
@@ -126,7 +135,7 @@ class FromOld {
         let eventRecord = this.registry.use('EventRecord')
         let eventRecordList = this.registry.use('Vec<EventRecord>')
         return {
-            types: this.registry.getTypeRegistry(),
+            types: this.registry.getTypes(),
             call,
             event,
             eventRecord,

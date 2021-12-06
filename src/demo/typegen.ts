@@ -1,17 +1,19 @@
-import {SpecCache} from "../old/metadata-old/cache"
-import {Typegen} from "../old/typegen/gen"
+import {kusamaBundle} from "../chains/kusama"
+import {Typegen} from "../typegen/typegen"
 import {OutDir} from "../util/out"
+import {readJson} from "../util/util"
 
 
 async function main(): Promise<void> {
-    let chainSpec = SpecCache.read('chainSpec.json').sort((a, b) => a.specVersion - b.specVersion)
+    let chain = readJson('kusamaChainVersions.json')
 
-    let outDir = new OutDir('src/a-project/types')
+    let outDir = new OutDir('src/a-types')
     outDir.del()
 
     Typegen.generate({
         outDir,
-        chainSpec,
+        chain,
+        typesBundle: kusamaBundle,
         events: [
             'balances.Transfer',
             'paraInclusion.CandidateIncluded'

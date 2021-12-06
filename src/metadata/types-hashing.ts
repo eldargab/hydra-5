@@ -153,10 +153,7 @@ export class TypeHasher {
                 }
             case TypeKind.BitSequence:
                 return {
-                    bitSequence: {
-                        bitOrderType: this.hash(type.bitOrderType, parent),
-                        bitStoreType: this.hash(type.bitStoreType, parent)
-                    }
+                    bitSequence: true
                 }
             case TypeKind.Bytes:
                 return {

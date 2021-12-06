@@ -1,19 +1,37 @@
-import {Channel} from "../util/async"
-import {DataBatch, IngestOptions} from "./ingest"
+import {assertNotNull} from "../util/util"
+import {EventHandler} from "./interfaces/handlerContext"
+import {Range} from "../util/range"
+import {Hooks, QualifiedName} from "./interfaces/hooks"
 
 
 export class Processor {
-    private batches = new Channel<DataBatch>(2)
+    private indexer = process.env.INDEXER_URL || ''
+    private hooks: Hooks = {pre: [], post: [], event: []}
 
-    constructor(private options: IngestOptions) {}
+    constructor(private name: string) {}
 
-    private async ingest() {
-
+    setIndexer(url: string): void {
+        this.indexer = url
     }
 
-    run() {
+    addEventHandler(eventName: QualifiedName, fn: EventHandler): void
+    addEventHandler(eventName: QualifiedName, blockRange: Range, fn: EventHandler): void
+    addEventHandler(eventName: QualifiedName, blockRangeOrHandler: Range | EventHandler, fn?: EventHandler): void {
+        if (typeof blockRangeOrHandler === 'function') {
+            this.hooks.event.push({
+                event: eventName,
+                handler: blockRangeOrHandler
+            })
+        } else {
+            this.hooks.event.push({
+                event: eventName,
+                range: blockRangeOrHandler,
+                handler: assertNotNull(fn)
+            })
+        }
+    }
+
+    run(): void {
 
     }
 }
-
-

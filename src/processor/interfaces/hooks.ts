@@ -1,6 +1,8 @@
-import {QualifiedName} from "../../old/metadata-old/base"
 import {Range} from "../../util/range"
 import {BlockHandler, EventHandler} from "./handlerContext"
+
+
+export type QualifiedName = string
 
 
 export interface BlockHook {

@@ -1,0 +1,1 @@
+../../resource/typegen/support.ts.txt

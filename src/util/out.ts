@@ -78,20 +78,29 @@ export class OutDir {
     }
 
     file(name: string): FileOutput {
-        return new FileOutput(path.join(this.dir, name))
+        return new FileOutput(this.path(name))
     }
 
     write(name: string, content: string): void {
-        const dst = path.join(this.dir, name)
+        const dst = this.path(name)
         fs.mkdirSync(path.dirname(dst), { recursive: true })
         fs.writeFileSync(dst, content)
     }
 
     child(name: string): OutDir {
-        return new OutDir(path.join(this.dir, name))
+        return new OutDir(this.path(name))
     }
 
     mkdir(): void {
         fs.mkdirSync(this.dir, { recursive: true })
+    }
+
+    add(name: string, srcFile: string | string[]): void {
+        let src = Array.isArray(srcFile) ? path.join(...srcFile) : srcFile
+        fs.copyFileSync(src, this.path(name))
+    }
+
+    path(name: string): string {
+        return path.join(this.dir, name)
     }
 }

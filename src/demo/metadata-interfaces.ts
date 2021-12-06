@@ -7,7 +7,7 @@ import {FileOutput} from "../util/out"
 function main() {
     let registry = new OldTypeRegistry(metadataDefinition)
     let type = registry.use('Metadata')
-    let ifs = new Interfaces(registry.getTypeRegistry())
+    let ifs = new Interfaces(registry.getTypes())
     ifs.use(type)
     let out = new FileOutput('src/metadata/interfaces.ts')
     ifs.generate(out)

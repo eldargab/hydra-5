@@ -1,28 +1,28 @@
 import assert from "assert"
 import {getCamelCase} from "../../util/naming"
 import {assertNotNull, unexpectedCase} from "../../util/util"
-import {Field, Primitive, Ti, Type, TypeKind, TypeRegistry, Variant} from "../types"
+import {Field, Primitive, Ti, Type, TypeKind, Variant} from "../types"
 import {normalizeByteSequences} from "../util"
 import * as texp from "./typeExp"
 import {OldEnumDefinition, OldSetDefinition, OldStructDefinition, OldTypeExp, OldTypes} from "./types"
 
 
 export class OldTypeRegistry {
-    private registry: TypeRegistry = []
+    private types: Type[] = []
     private lookup = new Map<OldTypeExp, Ti>()
 
     constructor(private oldTypes: OldTypes) {
     }
 
-    getTypeRegistry(): TypeRegistry {
-        return normalizeByteSequences(this.registry)
+    getTypes(): Type[] {
+        return normalizeByteSequences(this.types)
     }
 
     create(typeName: string, fn: () => Type): Ti {
         assert(!this.lookup.has(typeName), `Type ${typeName} was already defined`)
-        let ti = this.registry.push({kind: TypeKind.DoNotConstruct}) - 1
+        let ti = this.types.push({kind: TypeKind.DoNotConstruct}) - 1
         this.lookup.set(typeName, ti)
-        this.registry[ti] = fn()
+        this.types[ti] = fn()
         return ti
     }
 
@@ -38,13 +38,13 @@ export class OldTypeRegistry {
         let key = texp.print(type)
         let ti = this.lookup.get(key)
         if (ti == null) {
-            ti = this.registry.push({kind: TypeKind.DoNotConstruct}) - 1
+            ti = this.types.push({kind: TypeKind.DoNotConstruct}) - 1
             this.lookup.set(key, ti)
             let t = this.buildScaleType(type)
             if (typeof t == 'number') {
-                this.registry[ti] = this.registry[t]
+                this.types[ti] = this.types[t]
             } else {
-                this.registry[ti] = t
+                this.types[ti] = t
             }
         }
         return ti
@@ -139,7 +139,7 @@ export class OldTypeRegistry {
             }
             case 'Compact': {
                 let param = this.use(assertOneParam(type))
-                let paramDef = this.registry[param]
+                let paramDef = this.types[param]
                 if (paramDef.kind != TypeKind.Primitive || paramDef.primitive[0] != 'U') {
                     throw new Error(`Invalid type ${texp.print(type)}: only primitive unsigned numbers can be compact`)
                 }
@@ -265,11 +265,11 @@ export class OldTypeRegistry {
     }
 
     add(type: Type): Ti {
-        return this.registry.push(type) - 1
+        return this.types.push(type) - 1
     }
 
     get(ti: Ti): Type {
-        return assertNotNull(this.registry[ti])
+        return assertNotNull(this.types[ti])
     }
 }
 
